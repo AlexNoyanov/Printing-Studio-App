@@ -1,0 +1,89 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import Login from '../views/Login.vue'
+import Register from '../views/Register.vue'
+import CreateOrder from '../views/CreateOrder.vue'
+import MyOrders from '../views/MyOrders.vue'
+import Dashboard from '../views/Dashboard.vue'
+import Colors from '../views/Colors.vue'
+
+const routes = [
+  {
+    path: '/',
+    redirect: '/login'
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register
+  },
+  {
+    path: '/create-order',
+    name: 'CreateOrder',
+    component: CreateOrder,
+    meta: { requiresAuth: true, requiresRole: 'user' }
+  },
+  {
+    path: '/orders',
+    name: 'MyOrders',
+    component: MyOrders,
+    meta: { requiresAuth: true, requiresRole: 'user' }
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: Dashboard,
+    meta: { requiresAuth: true, requiresRole: 'printer' }
+  },
+  {
+    path: '/colors',
+    name: 'Colors',
+    component: Colors,
+    meta: { requiresAuth: true, requiresRole: 'printer' }
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+router.beforeEach((to, from, next) => {
+  const currentUser = localStorage.getItem('currentUser')
+  
+  if (to.meta.requiresAuth && !currentUser) {
+    next('/login')
+    return
+  }
+  
+  if (to.meta.requiresAuth && currentUser) {
+    try {
+      const userData = JSON.parse(currentUser)
+      const requiredRole = to.meta.requiresRole
+      
+      if (requiredRole && userData.role !== requiredRole) {
+        // Redirect based on role
+        if (userData.role === 'user') {
+          next('/orders')
+        } else if (userData.role === 'printer') {
+          next('/dashboard')
+        } else {
+          next('/login')
+        }
+        return
+      }
+    } catch (e) {
+      next('/login')
+      return
+    }
+  }
+  
+  next()
+})
+
+export default router
+
