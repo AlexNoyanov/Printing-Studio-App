@@ -32,6 +32,11 @@ SetEnvIf Request_URI "^/Apps/Printing/api" CORS=1
 RewriteCond %{REQUEST_URI} ^/Apps/Printing/api
 RewriteRule ^api/(.*)$ backend/index.php [QSA,L]
 
+# Explicitly handle OPTIONS requests for API
+RewriteCond %{REQUEST_METHOD} ^OPTIONS
+RewriteCond %{REQUEST_URI} ^/Apps/Printing/api
+RewriteRule ^api/(.*)$ backend/index.php [QSA,L]
+
 # Frontend routing - serve index.html for all non-file requests
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

@@ -1,0 +1,42 @@
+name: Deploy Backend API (SFTP)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend-sftp.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+      
+      - name: Validate PHP syntax
+        run: |
+          find backend -name "*.php" -exec php -l {} \;
+      
+      - name: Deploy via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.0
+        with:
+          username: ${{ secrets.SFTP_USERNAME }}
+          server: ${{ secrets.SFTP_SERVER }}
+          ssh_private_key: ${{ secrets.SFTP_SSH_KEY }}
+          local_path: ./backend/
+          remote_path: /Apps/Printing/backend/
+          args: '-o ConnectTimeout=5'
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Backend API deployed to https://noyanov.com/Apps/Printing/api/"
+
