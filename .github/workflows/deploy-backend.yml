@@ -33,7 +33,23 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: /Apps/Printing/
-          local-dir: ./backend/
+          local-dir: ./
+          include: |
+            backend/**
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/test_*.php
+            **/config.php
+            **/src/**
+            **/dist/**
+            **/*.md
+            **/package*.json
+            **/vite.config.*
+            **/.firebase/**
+            **/.firebaserc
+            **/firebase.json
           exclude: |
             **/.git*
             **/.git*/**
