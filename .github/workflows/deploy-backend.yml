@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'backend/**'
+      - 'api/**'
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
@@ -25,31 +26,16 @@ jobs:
       - name: Validate PHP syntax
         run: |
           find backend -name "*.php" -exec php -l {} \;
+          find api -name "*.php" -exec php -l {} \;
       
-      - name: Deploy to server via FTP
+      - name: Deploy backend to server via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /Apps/Printing/
-          local-dir: ./
-          include: |
-            backend/**
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/test_*.php
-            **/config.php
-            **/src/**
-            **/dist/**
-            **/*.md
-            **/package*.json
-            **/vite.config.*
-            **/.firebase/**
-            **/.firebaserc
-            **/firebase.json
+          server-dir: /Apps/Printing/backend/
+          local-dir: ./backend/
           exclude: |
             **/.git*
             **/.git*/**
@@ -58,7 +44,16 @@ jobs:
             **/config.php
           dangerous-clean-slate: false
       
+      - name: Deploy API router to server via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /Apps/Printing/api/
+          local-dir: ./api/
+          dangerous-clean-slate: false
+      
       - name: Notify deployment
         run: |
           echo "✅ Backend API deployed to https://noyanov.com/Apps/Printing/api/"
-
