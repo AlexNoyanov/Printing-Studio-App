@@ -44,7 +44,7 @@ jobs:
             **/config.php
           dangerous-clean-slate: false
       
-      - name: Deploy API router to server via FTP
+      - name: Deploy API endpoints to server via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -52,6 +52,9 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: /Apps/Printing/api/
           local-dir: ./api/
+          exclude: |
+            **/.git*
+            **/.git*/**
           dangerous-clean-slate: false
       
       - name: Notify deployment

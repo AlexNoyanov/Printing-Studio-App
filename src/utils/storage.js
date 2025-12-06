@@ -40,7 +40,7 @@ export const storage = {
   // Users storage
   async getUsers() {
     try {
-      const users = await apiCall('/users')
+      const users = await apiCall('/users.php')
       // Clear localStorage cache when we successfully get from API
       localStorage.removeItem('users')
       return users
@@ -63,7 +63,7 @@ export const storage = {
           })
         } catch {
           // If user doesn't exist, create it
-          await apiCall('/users', {
+          await apiCall('/users.php', {
             method: 'POST',
             body: JSON.stringify(user)
           })
@@ -84,7 +84,7 @@ export const storage = {
 
   async createUser(user) {
     try {
-      const result = await apiCall('/users', {
+      const result = await apiCall('/users.php', {
         method: 'POST',
         body: JSON.stringify(user)
       })
@@ -126,7 +126,7 @@ export const storage = {
           })
         } catch {
           // If order doesn't exist, create it
-          await apiCall('/orders', {
+          await apiCall('/orders.php', {
             method: 'POST',
             body: JSON.stringify(order)
           })
@@ -147,7 +147,7 @@ export const storage = {
 
   async createOrder(order) {
     try {
-      const result = await apiCall('/orders', {
+      const result = await apiCall('/orders.php', {
         method: 'POST',
         body: JSON.stringify(order)
       })
@@ -210,7 +210,7 @@ export const storage = {
           })
         } catch {
           // If color doesn't exist, create it
-          await apiCall('/colors', {
+          await apiCall('/colors.php', {
             method: 'POST',
             body: JSON.stringify({
               id: color.id,
@@ -237,7 +237,7 @@ export const storage = {
 
   async createColor(color) {
     try {
-      const result = await apiCall('/colors', {
+      const result = await apiCall('/colors.php', {
         method: 'POST',
         body: JSON.stringify({
           id: color.id,
