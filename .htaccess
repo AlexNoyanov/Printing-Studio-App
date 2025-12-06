@@ -1,0 +1,40 @@
+# Printing App - Main .htaccess
+# Deployed at: noyanov.com/Apps/Printing/
+
+RewriteEngine On
+
+# Set CORS headers at Apache level for all API requests
+<IfModule mod_headers.c>
+    # Set CORS headers for all API requests
+    <FilesMatch "^(index\.php|.*\.php)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+        Header always set Access-Control-Max-Age "3600"
+    </FilesMatch>
+    
+    # Handle OPTIONS preflight requests
+    Header always set Access-Control-Allow-Origin "*" env=CORS
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" env=CORS
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin" env=CORS
+    
+    # Security headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+</IfModule>
+
+# Set environment variable for API requests
+SetEnvIf Request_URI "^/Apps/Printing/api" CORS=1
+
+# API requests - route ALL requests (including OPTIONS) to backend
+# The RewriteRule pattern is relative to the .htaccess directory
+# So if .htaccess is in /Apps/Printing/, pattern matches "api/..."
+RewriteCond %{REQUEST_URI} ^/Apps/Printing/api
+RewriteRule ^api/(.*)$ backend/index.php [QSA,L]
+
+# Frontend routing - serve index.html for all non-file requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/Apps/Printing/api
+RewriteRule ^(.*)$ index.html [QSA,L]
+

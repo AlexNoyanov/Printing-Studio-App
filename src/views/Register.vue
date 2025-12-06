@@ -65,41 +65,38 @@ const role = ref('user')
 const error = ref('')
 const success = ref('')
 
-const handleRegister = () => {
+const handleRegister = async () => {
   error.value = ''
   success.value = ''
   
-  const users = storage.getUsers()
-  
-  // Check if email already exists
-  if (users.some(u => u.email === email.value)) {
-    error.value = 'Email already registered'
-    return
+  try {
+    // Create new user - backend will check for duplicates
+    const newUser = {
+      id: Date.now().toString(),
+      username: username.value,
+      email: email.value,
+      password: password.value,
+      role: role.value
+    }
+    
+    await storage.createUser(newUser)
+    
+    success.value = 'Registration successful! Redirecting to login...'
+    
+    setTimeout(() => {
+      router.push('/login')
+    }, 1500)
+  } catch (e) {
+    // Handle specific error messages from backend
+    if (e.message && e.message.includes('already exists')) {
+      error.value = 'Email or username already registered'
+    } else if (e.message && e.message.includes('409')) {
+      error.value = 'Email or username already registered'
+    } else {
+      error.value = 'Registration failed: ' + (e.message || 'Please try again.')
+    }
+    console.error('Registration error:', e)
   }
-  
-  // Check if username already exists
-  if (users.some(u => u.username === username.value)) {
-    error.value = 'Username already taken'
-    return
-  }
-  
-  // Create new user
-  const newUser = {
-    id: Date.now().toString(),
-    username: username.value,
-    email: email.value,
-    password: password.value,
-    role: role.value
-  }
-  
-  users.push(newUser)
-  storage.saveUsers(users)
-  
-  success.value = 'Registration successful! Redirecting to login...'
-  
-  setTimeout(() => {
-    router.push('/login')
-  }, 1500)
 }
 </script>
 
@@ -141,8 +138,9 @@ const handleRegister = () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 500;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .form-group input,
@@ -154,7 +152,7 @@ const handleRegister = () => {
   font-size: 1rem;
   transition: border-color 0.3s;
   background: #1a1a1a;
-  color: #e0e0e0;
+  color: #b8dce8;
 }
 
 .form-group input:focus,

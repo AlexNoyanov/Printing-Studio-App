@@ -1,0 +1,23 @@
+# API Routing for Printing App Backend
+# Deployed at: noyanov.com/Apps/Printing/backend/
+
+RewriteEngine On
+
+# Set CORS headers via Apache if mod_headers is available
+<IfModule mod_headers.c>
+    # Handle preflight OPTIONS requests
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+    Header always set Access-Control-Max-Age "3600"
+</IfModule>
+
+# Route all API requests to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ index.php [QSA,L]
+
+# If accessing backend directly, route to health check
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^$ api/health [R=301,L]

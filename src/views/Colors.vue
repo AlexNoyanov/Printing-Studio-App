@@ -43,6 +43,17 @@
             <small>Pick a color or enter hex value (e.g., #FF5733)</small>
           </div>
 
+          <div class="form-group">
+            <label for="filamentLink">Filament Shop Link</label>
+            <input
+              id="filamentLink"
+              v-model="colorForm.filamentLink"
+              type="url"
+              placeholder="https://example.com/filament"
+            />
+            <small>Link to the shop where this filament was purchased</small>
+          </div>
+
           <div class="color-preview">
             <div
               class="preview-box"
@@ -89,6 +100,13 @@
             <div class="color-info">
               <h3>{{ color.name }}</h3>
               <p class="color-hex">{{ color.value.toUpperCase() }}</p>
+              <router-link
+                :to="`/filaments/${color.id}`"
+                class="filament-link"
+                v-if="color.id"
+              >
+                View Filament →
+              </router-link>
             </div>
             <div class="color-actions">
               <button
@@ -120,7 +138,8 @@ import { storage } from '../utils/storage'
 const colors = ref([])
 const colorForm = ref({
   name: '',
-  value: '#000000'
+  value: '#000000',
+  filamentLink: ''
 })
 const editingColor = ref(null)
 const error = ref('')
@@ -136,12 +155,16 @@ const getCurrentUser = () => {
   }
 }
 
-const loadColors = () => {
+const loadColors = async () => {
   const user = getCurrentUser()
   if (!user) return
 
-  const allColors = storage.getColors()
-  colors.value = allColors.filter(c => c.userId === user.id)
+  try {
+    const allColors = await storage.getColors(user.id)
+    colors.value = allColors
+  } catch (e) {
+    console.error('Error loading colors:', e)
+  }
 }
 
 const validateColor = (event) => {
@@ -153,7 +176,7 @@ const validateColor = (event) => {
   }
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   error.value = ''
   success.value = ''
 
@@ -173,56 +196,59 @@ const handleSubmit = () => {
     return
   }
 
-  const allColors = storage.getColors()
-
-  if (editingColor.value) {
-    // Update existing color
-    const index = allColors.findIndex(c => c.id === editingColor.value.id)
-    if (index !== -1) {
-      allColors[index] = {
-        ...allColors[index],
+  try {
+    if (editingColor.value) {
+      // Update existing color
+      await storage.updateColor(editingColor.value.id, {
         name: colorForm.value.name.trim(),
-        value: colorForm.value.value.toUpperCase()
-      }
-      storage.saveColors(allColors)
+        value: colorForm.value.value.toUpperCase(),
+        hex: colorForm.value.value.toUpperCase(),
+        filamentLink: colorForm.value.filamentLink.trim() || ''
+      })
       success.value = 'Color updated successfully!'
-    }
-  } else {
-    // Add new color
-    // Check if color name already exists for this user
-    const existingColor = allColors.find(
-      c => c.userId === user.id && c.name.toLowerCase() === colorForm.value.name.trim().toLowerCase()
-    )
-    if (existingColor) {
-      error.value = 'A color with this name already exists'
-      return
+    } else {
+      // Add new color
+      // Check if color name already exists for this user
+      const allColors = await storage.getColors(user.id)
+      const existingColor = allColors.find(
+        c => c.name.toLowerCase() === colorForm.value.name.trim().toLowerCase()
+      )
+      if (existingColor) {
+        error.value = 'A color with this name already exists'
+        return
+      }
+
+      const newColor = {
+        id: Date.now().toString(),
+        userId: user.id,
+        name: colorForm.value.name.trim(),
+        value: colorForm.value.value.toUpperCase(),
+        hex: colorForm.value.value.toUpperCase(),
+        filamentLink: colorForm.value.filamentLink.trim() || ''
+      }
+      await storage.createColor(newColor)
+      success.value = 'Color added successfully!'
     }
 
-    const newColor = {
-      id: Date.now().toString(),
-      userId: user.id,
-      name: colorForm.value.name.trim(),
-      value: colorForm.value.value.toUpperCase()
-    }
-    allColors.push(newColor)
-    storage.saveColors(allColors)
-    success.value = 'Color added successfully!'
+    await loadColors()
+    resetForm()
+
+    setTimeout(() => {
+      success.value = ''
+      error.value = ''
+    }, 3000)
+  } catch (e) {
+    error.value = 'Failed to save color. Please try again.'
+    console.error('Save color error:', e)
   }
-
-  loadColors()
-  resetForm()
-
-  setTimeout(() => {
-    success.value = ''
-    error.value = ''
-  }, 3000)
 }
 
 const editColor = (color) => {
   editingColor.value = color
   colorForm.value = {
     name: color.name,
-    value: color.value
+    value: color.value,
+    filamentLink: color.filamentLink || ''
   }
   // Scroll to form
   document.querySelector('.color-form-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -236,24 +262,28 @@ const cancelEdit = () => {
 const resetForm = () => {
   colorForm.value = {
     name: '',
-    value: '#000000'
+    value: '#000000',
+    filamentLink: ''
   }
   editingColor.value = null
 }
 
-const deleteColor = (colorId) => {
+const deleteColor = async (colorId) => {
   if (!confirm('Are you sure you want to delete this color?')) {
     return
   }
 
-  const allColors = storage.getColors()
-  const filteredColors = allColors.filter(c => c.id !== colorId)
-  storage.saveColors(filteredColors)
-  loadColors()
-  success.value = 'Color deleted successfully!'
-  setTimeout(() => {
-    success.value = ''
-  }, 3000)
+  try {
+    await storage.deleteColor(colorId)
+    await loadColors()
+    success.value = 'Color deleted successfully!'
+    setTimeout(() => {
+      success.value = ''
+    }, 3000)
+  } catch (e) {
+    error.value = 'Failed to delete color. Please try again.'
+    console.error('Delete color error:', e)
+  }
 }
 
 onMounted(() => {
@@ -276,7 +306,11 @@ onMounted(() => {
 .page-header h1 {
   color: #87CEEB;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 50%, #4da6c2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .colors-content {
@@ -319,8 +353,9 @@ onMounted(() => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 500;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .form-group input[type="text"] {
@@ -330,7 +365,7 @@ onMounted(() => {
   border-radius: 5px;
   font-size: 1rem;
   background: #1a1a1a;
-  color: #e0e0e0;
+  color: #b8dce8;
   transition: border-color 0.3s;
 }
 
@@ -365,7 +400,7 @@ onMounted(() => {
   border-radius: 5px;
   font-size: 1rem;
   background: #1a1a1a;
-  color: #e0e0e0;
+  color: #b8dce8;
   font-family: monospace;
   text-transform: uppercase;
 }
@@ -401,8 +436,9 @@ onMounted(() => {
 }
 
 .preview-text {
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 500;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .error-message {
@@ -504,15 +540,31 @@ onMounted(() => {
 }
 
 .color-info h3 {
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-size: 1rem;
   margin-bottom: 0.25rem;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .color-hex {
   color: #999;
   font-size: 0.85rem;
   font-family: monospace;
+}
+
+.filament-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #87CEEB;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.3s;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
+}
+
+.filament-link:hover {
+  color: #6bb6d6;
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.6);
 }
 
 .color-actions {

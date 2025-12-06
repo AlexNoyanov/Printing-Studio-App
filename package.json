@@ -6,14 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:firebase": "vite build --config vite.config.firebase.js",
     "preview": "vite preview",
-    "server": "node server.js"
+    "server": "node backend/server.js",
+    "server:dev": "node --watch backend/server.js",
+    "db:init": "echo 'Please run: mysql -h YOUR_HOST -u YOUR_USER -pYOUR_PASSWORD YOUR_DATABASE < database/schema.sql'",
+    "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting"
   },
   "dependencies": {
     "vue": "^3.4.0",
     "vue-router": "^4.2.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "mysql2": "^3.6.5",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

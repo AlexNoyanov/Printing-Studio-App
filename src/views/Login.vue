@@ -43,26 +43,31 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 
-const handleLogin = () => {
+const handleLogin = async () => {
   error.value = ''
-  const users = storage.getUsers()
-  const user = users.find(u => u.email === email.value && u.password === password.value)
-  
-  if (user) {
-    localStorage.setItem('currentUser', JSON.stringify({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      role: user.role
-    }))
+  try {
+    const users = await storage.getUsers()
+    const user = users.find(u => u.email === email.value && u.password === password.value)
     
-    if (user.role === 'printer') {
-      router.push('/dashboard')
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      }))
+      
+      if (user.role === 'printer') {
+        router.push('/dashboard')
+      } else {
+        router.push('/orders')
+      }
     } else {
-      router.push('/orders')
+      error.value = 'Invalid email or password'
     }
-  } else {
-    error.value = 'Invalid email or password'
+  } catch (e) {
+    error.value = 'Failed to connect to server. Please try again.'
+    console.error('Login error:', e)
   }
 }
 </script>
@@ -105,8 +110,9 @@ const handleLogin = () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 500;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .form-group input {
@@ -117,7 +123,7 @@ const handleLogin = () => {
   font-size: 1rem;
   transition: border-color 0.3s;
   background: #1a1a1a;
-  color: #e0e0e0;
+  color: #b8dce8;
 }
 
 .form-group input:focus {

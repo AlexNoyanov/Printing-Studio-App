@@ -103,7 +103,7 @@ const getCurrentUser = () => {
   }
 }
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
   error.value = ''
   success.value = ''
   
@@ -119,30 +119,33 @@ const handleSubmit = () => {
     return
   }
   
-  const orders = storage.getOrders()
-  const newOrder = {
-    id: Date.now().toString(),
-    userId: user.id,
-    userName: user.username,
-    modelLink: modelLink.value,
-    colors: selectedColors.value.map(id => {
-      const color = availableColors.value.find(c => c.id === id)
-      return color ? color.name : id
-    }),
-    comment: comment.value,
-    status: 'Created',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  try {
+    const newOrder = {
+      id: Date.now().toString(),
+      userId: user.id,
+      userName: user.username,
+      modelLink: modelLink.value,
+      colors: selectedColors.value.map(id => {
+        const color = availableColors.value.find(c => c.id === id)
+        return color ? color.name : id
+      }),
+      comment: comment.value,
+      status: 'Created',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    await storage.createOrder(newOrder)
+    
+    success.value = 'Order created successfully!'
+    
+    setTimeout(() => {
+      router.push('/orders')
+    }, 1500)
+  } catch (e) {
+    error.value = 'Failed to create order. Please try again.'
+    console.error('Create order error:', e)
   }
-  
-  orders.push(newOrder)
-  storage.saveOrders(orders)
-  
-  success.value = 'Order created successfully!'
-  
-  setTimeout(() => {
-    router.push('/orders')
-  }, 1500)
 }
 </script>
 
@@ -159,9 +162,13 @@ const handleSubmit = () => {
 }
 
 .page-header h1 {
-  color: white;
+  color: #87CEEB;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 50%, #4da6c2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .order-form-card {
@@ -184,9 +191,10 @@ const handleSubmit = () => {
 .form-group label {
   display: block;
   margin-bottom: 0.75rem;
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 600;
   font-size: 1.1rem;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .form-group input[type="url"],
@@ -199,7 +207,7 @@ const handleSubmit = () => {
   transition: border-color 0.3s;
   font-family: inherit;
   background: #1a1a1a;
-  color: #e0e0e0;
+  color: #b8dce8;
 }
 
 .form-group input[type="url"]:focus,

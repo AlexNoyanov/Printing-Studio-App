@@ -54,11 +54,9 @@ const routes = [
   }
 ]
 
-// Detect base path - use root for Firebase, /Apps/Printing/ for server deployment
-const basePath = import.meta.env.BASE_URL || '/Apps/Printing/'
-
+// Firebase version - uses root path
 const router = createRouter({
-  history: createWebHistory(basePath),
+  history: createWebHistory('/'),
   routes
 })
 

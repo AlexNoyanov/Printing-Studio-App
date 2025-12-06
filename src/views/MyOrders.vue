@@ -80,12 +80,16 @@ const getCurrentUser = () => {
   }
 }
 
-const loadOrders = () => {
+const loadOrders = async () => {
   const user = getCurrentUser()
   if (!user) return
   
-  const allOrders = storage.getOrders()
-  orders.value = allOrders.filter(o => o.userId === user.id)
+  try {
+    const allOrders = await storage.getOrders(user.id)
+    orders.value = allOrders
+  } catch (e) {
+    console.error('Error loading orders:', e)
+  }
 }
 
 const sortedOrders = computed(() => {
@@ -141,9 +145,13 @@ onMounted(() => {
 }
 
 .page-header h1 {
-  color: white;
+  color: #87CEEB;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 50%, #4da6c2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .create-btn {
@@ -208,8 +216,9 @@ onMounted(() => {
 }
 
 .order-header h3 {
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-size: 1.5rem;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .status-badge {
@@ -291,7 +300,8 @@ onMounted(() => {
 }
 
 .detail-item span {
-  color: #e0e0e0;
+  color: #b8dce8;
+  text-shadow: 0 0 3px rgba(135, 206, 235, 0.2);
 }
 
 .colors-list {

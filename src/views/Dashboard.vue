@@ -115,9 +115,13 @@ const selectedStatus = ref('')
 
 const statuses = ['Created', 'Reviewed', 'Printing', 'Printed', 'Delivery', 'Done']
 
-const loadOrders = () => {
-  const allOrders = storage.getOrders()
-  orders.value = allOrders
+const loadOrders = async () => {
+  try {
+    const allOrders = await storage.getOrders()
+    orders.value = allOrders
+  } catch (e) {
+    console.error('Error loading orders:', e)
+  }
 }
 
 const uniqueUsers = computed(() => {
@@ -149,15 +153,16 @@ const pendingOrders = computed(() => {
   ).length
 })
 
-const updateStatus = (orderId, newStatus) => {
-  const allOrders = storage.getOrders()
-  const orderIndex = allOrders.findIndex(o => o.id === orderId)
-  
-  if (orderIndex !== -1) {
-    allOrders[orderIndex].status = newStatus
-    allOrders[orderIndex].updatedAt = new Date().toISOString()
-    storage.saveOrders(allOrders)
-    loadOrders()
+const updateStatus = async (orderId, newStatus) => {
+  try {
+    await storage.updateOrder(orderId, {
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    })
+    await loadOrders()
+  } catch (e) {
+    console.error('Error updating order status:', e)
+    alert('Failed to update order status. Please try again.')
   }
 }
 
@@ -196,9 +201,13 @@ onMounted(() => {
 }
 
 .page-header h1 {
-  color: white;
+  color: #87CEEB;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 50%, #4da6c2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stats {
@@ -261,14 +270,19 @@ onMounted(() => {
 
 .filter-select {
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
   border: 2px solid #3a3a3a;
   border-radius: 5px;
   font-size: 1rem;
   cursor: pointer;
   transition: border-color 0.3s;
-  background: #1a1a1a;
-  color: #e0e0e0;
+  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2387CEEB' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  color: #b8dce8;
+  appearance: none;
 }
 
 .filter-select:focus {
@@ -308,9 +322,10 @@ onMounted(() => {
 }
 
 .order-header h3 {
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .user-name {
@@ -335,19 +350,25 @@ onMounted(() => {
 }
 
 .status-select {
-  padding: 0.75rem;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
   border: 2px solid #87CEEB;
   border-radius: 5px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  background: #1a1a1a;
-  color: #e0e0e0;
-  transition: background 0.3s;
+  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2387CEEB' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  color: #b8dce8;
+  transition: background-color 0.3s;
+  box-shadow: 0 0 5px rgba(135, 206, 235, 0.2);
+  appearance: none;
 }
 
 .status-select:hover {
-  background: #2a2a2a;
+  background-color: #2a2a2a;
 }
 
 .order-details {
@@ -385,7 +406,8 @@ onMounted(() => {
 }
 
 .detail-item span {
-  color: #e0e0e0;
+  color: #b8dce8;
+  text-shadow: 0 0 3px rgba(135, 206, 235, 0.2);
 }
 
 .colors-list {

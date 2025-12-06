@@ -6,3 +6,22 @@ dist/
 .env.local
 .env.*.local
 
+# Sensitive configuration files
+backend/config.php
+backend/test_db.php
+backend/test_cors.php
+
+# Data files
+data/
+
+# Documentation files with sensitive info (will be sanitized)
+# DATABASE_FIX.md
+# DEPLOYMENT_PHP.md
+# DEPLOYMENT.md
+# README_BACKEND.md
+# database/fix_permissions.sql
+
+# Firebase (optional - can be included if you want)
+# .firebaserc
+# firebase.json
+

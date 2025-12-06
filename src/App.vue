@@ -90,7 +90,7 @@ body {
 }
 
 .logo-image {
-  height: 50px;
+  height: 90px;
   width: auto;
   object-fit: contain;
 }
@@ -115,14 +115,16 @@ body {
 
 .nav-links a {
   text-decoration: none;
-  color: #e0e0e0;
+  color: #a0d4e8;
   font-weight: 500;
-  transition: color 0.3s;
+  transition: all 0.3s;
+  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
 }
 
 .nav-links a:hover,
 .nav-links a.router-link-active {
   color: #87CEEB;
+  text-shadow: 0 0 10px rgba(135, 206, 235, 0.6), 0 0 15px rgba(135, 206, 235, 0.4);
 }
 
 .logout-btn {
