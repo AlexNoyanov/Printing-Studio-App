@@ -114,12 +114,12 @@
             @click="migrateColors"
             class="migrate-btn"
             :disabled="migrating"
-            title="Convert existing colors to filaments"
+            title="Convert all existing colors from all users to filaments"
           >
-            {{ migrating ? 'Migrating...' : 'Migrate Colors to Filaments' }}
+            {{ migrating ? 'Migrating...' : 'Migrate All Colors to Filaments' }}
           </button>
         </div>
-        <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message">
+        <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message" style="white-space: pre-line;">
           {{ migrationMessage }}
         </div>
         <div v-if="filaments.length === 0" class="empty-filaments">
@@ -237,7 +237,7 @@ const migrateColors = async () => {
     return
   }
   
-  if (!confirm('This will convert all your existing colors to filaments with default material type "PLA". Continue?')) {
+  if (!confirm('This will convert ALL existing colors from ALL users to filaments with default material type "PLA". Continue?')) {
     return
   }
   
@@ -247,19 +247,25 @@ const migrateColors = async () => {
   success.value = ''
   
   try {
-    const result = await storage.migrateColorsToFilaments(user.id)
+    // Call migration without userId to migrate all users' colors
+    const result = await storage.migrateColorsToFilaments(null)
     
     if (result.success) {
-      migrationMessage.value = result.message + ` (${result.migrated} migrated, ${result.skipped} skipped)`
+      let message = result.message
+      if (result.users && result.users.length > 0) {
+        const userDetails = result.users.map(u => `${u.username}: ${u.migrated} migrated, ${u.skipped} skipped`).join('; ')
+        message += `\n\nPer user: ${userDetails}`
+      }
+      migrationMessage.value = message
       migrationMessageClass.value = 'success'
       
       // Reload filaments
       await loadFilaments()
       
-      // Clear message after 5 seconds
+      // Clear message after 8 seconds (longer for multi-user info)
       setTimeout(() => {
         migrationMessage.value = ''
-      }, 5000)
+      }, 8000)
     } else {
       migrationMessage.value = result.message || 'Migration completed with warnings'
       migrationMessageClass.value = 'info'

@@ -30,26 +30,18 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     }
     
-    // Get current user from request
-    $data = getRequestBody();
-    $userId = $data['userId'] ?? null;
-    
-    if (!$userId) {
-        sendJSON(['error' => 'User ID required'], 400);
-    }
-    
-    // Get all colors for this user
-    $stmt = $pdo->prepare("SELECT id, user_id, name, value, filament_link, created_at, updated_at FROM colors WHERE user_id = ?");
-    $stmt->execute([$userId]);
+    // Get all colors from all users
+    $stmt = $pdo->query("SELECT id, user_id, name, value, filament_link, created_at, updated_at FROM colors ORDER BY user_id, created_at");
     $colors = $stmt->fetchAll();
     
     if (empty($colors)) {
-        sendJSON(['success' => true, 'message' => 'No colors found to migrate', 'migrated' => 0]);
+        sendJSON(['success' => true, 'message' => 'No colors found to migrate', 'migrated' => 0, 'users' => []]);
     }
     
-    // Migrate colors to materials
+    // Migrate colors to materials for all users
     $migrated = 0;
     $skipped = 0;
+    $userStats = [];
     
     $insertStmt = $pdo->prepare("INSERT INTO materials (id, user_id, name, color, material_type, shop_link, created_at, updated_at)
                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -58,12 +50,20 @@ try {
                                    updated_at = CURRENT_TIMESTAMP");
     
     foreach ($colors as $color) {
-        // Check if material already exists
+        $userId = $color['user_id'];
+        
+        // Initialize user stats if not exists
+        if (!isset($userStats[$userId])) {
+            $userStats[$userId] = ['migrated' => 0, 'skipped' => 0];
+        }
+        
+        // Check if material already exists for this user
         $checkStmt = $pdo->prepare("SELECT id FROM materials WHERE user_id = ? AND name = ? AND color = ?");
         $checkStmt->execute([$userId, $color['name'], $color['value']]);
         
         if ($checkStmt->rowCount() > 0) {
             $skipped++;
+            $userStats[$userId]['skipped']++;
             continue;
         }
         
@@ -83,14 +83,42 @@ try {
         ]);
         
         $migrated++;
+        $userStats[$userId]['migrated']++;
+    }
+    
+    // Get user names for stats
+    $userIds = array_keys($userStats);
+    $userNames = [];
+    if (!empty($userIds)) {
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $userStmt = $pdo->prepare("SELECT id, username FROM users WHERE id IN ($placeholders)");
+        $userStmt->execute($userIds);
+        $users = $userStmt->fetchAll();
+        foreach ($users as $user) {
+            $userNames[$user['id']] = $user['username'];
+        }
+    }
+    
+    // Format user stats
+    $formattedStats = [];
+    foreach ($userStats as $userId => $stats) {
+        if ($stats['migrated'] > 0 || $stats['skipped'] > 0) {
+            $formattedStats[] = [
+                'userId' => $userId,
+                'username' => $userNames[$userId] ?? 'Unknown',
+                'migrated' => $stats['migrated'],
+                'skipped' => $stats['skipped']
+            ];
+        }
     }
     
     sendJSON([
         'success' => true,
-        'message' => "Migrated $migrated colors to filaments",
+        'message' => "Migrated $migrated colors to filaments for " . count($formattedStats) . " user(s)",
         'migrated' => $migrated,
         'skipped' => $skipped,
-        'total' => count($colors)
+        'total' => count($colors),
+        'users' => $formattedStats
     ]);
     
 } catch (PDOException $e) {

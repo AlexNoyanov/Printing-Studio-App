@@ -363,12 +363,12 @@ export const storage = {
     }
   },
 
-  // Migrate colors to filaments
-  async migrateColorsToFilaments(userId) {
+  // Migrate colors to filaments (migrates all users if userId is null)
+  async migrateColorsToFilaments(userId = null) {
     try {
       const result = await apiCall('/migrate_colors.php', {
         method: 'POST',
-        body: JSON.stringify({ userId })
+        body: JSON.stringify(userId ? { userId } : {})
       })
       return result
     } catch (e) {
