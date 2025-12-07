@@ -94,25 +94,33 @@ try {
                 $stmt->execute($params);
                 $orders = $stmt->fetchAll();
                 
-                // Get links for all orders
+                // Get links for all orders with copies
                 $orderIds = array_column($orders, 'id');
                 $linksMap = [];
+                $linksWithCopiesMap = [];
                 if (!empty($orderIds)) {
                     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
-                    $linkStmt = $pdo->prepare("SELECT order_id, link_url FROM order_links WHERE order_id IN ($placeholders) ORDER BY link_order, id");
+                    $linkStmt = $pdo->prepare("SELECT order_id, link_url, copies FROM order_links WHERE order_id IN ($placeholders) ORDER BY link_order, id");
                     $linkStmt->execute($orderIds);
                     $linkRows = $linkStmt->fetchAll();
                     
                     foreach ($linkRows as $linkRow) {
-                        if (!isset($linksMap[$linkRow['order_id']])) {
-                            $linksMap[$linkRow['order_id']] = [];
+                        $orderId = $linkRow['order_id'];
+                        if (!isset($linksMap[$orderId])) {
+                            $linksMap[$orderId] = [];
+                            $linksWithCopiesMap[$orderId] = [];
                         }
-                        $linksMap[$linkRow['order_id']][] = $linkRow['link_url'];
+                        $linksMap[$orderId][] = $linkRow['link_url'];
+                        $linksWithCopiesMap[$orderId][] = [
+                            'url' => $linkRow['link_url'],
+                            'copies' => intval($linkRow['copies'] ?? 1)
+                        ];
                     }
                 }
                 
-                $result = array_map(function($order) use ($linksMap) {
+                $result = array_map(function($order) use ($linksMap, $linksWithCopiesMap) {
                     $links = $linksMap[$order['id']] ?? [];
+                    $linksWithCopies = $linksWithCopiesMap[$order['id']] ?? [];
                     $modelLink = !empty($links) ? $links[0] : ($order['model_link'] ?? '');
                     
                     return [
@@ -120,7 +128,8 @@ try {
                         'userId' => $order['user_id'],
                         'userName' => $order['user_name'],
                         'modelLink' => $modelLink, // Backward compatibility
-                        'modelLinks' => $links, // New: array of all links
+                        'modelLinks' => $links, // New: array of all links (for backward compatibility)
+                        'modelLinksWithCopies' => $linksWithCopies, // New: array with copies
                         'comment' => $order['comment'],
                         'status' => $order['status'],
                         'colors' => $order['colors'] ? explode(',', $order['colors']) : [],
