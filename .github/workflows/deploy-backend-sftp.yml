@@ -1,13 +1,18 @@
 name: Deploy Backend API (SFTP)
 
+# NOTE: This workflow is disabled by default. 
+# Uncomment the 'on' section below if you want to use SFTP instead of FTP.
+# Make sure to configure SFTP_SERVER, SFTP_USERNAME, and SFTP_SSH_KEY secrets.
+
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - '.github/workflows/deploy-backend-sftp.yml'
-  workflow_dispatch:
+  workflow_dispatch:  # Only allow manual runs
+  # Uncomment below to enable automatic deployment on push:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'backend/**'
+  #     - '.github/workflows/deploy-backend-sftp.yml'
 
 jobs:
   deploy:
@@ -26,7 +31,19 @@ jobs:
         run: |
           find backend -name "*.php" -exec php -l {} \;
       
+      - name: Check SFTP secrets
+        id: check-sftp
+        run: |
+          if [ -z "${{ secrets.SFTP_SERVER }}" ] || [ -z "${{ secrets.SFTP_USERNAME }}" ] || [ -z "${{ secrets.SFTP_SSH_KEY }}" ]; then
+            echo "⚠️ SFTP secrets not configured. Skipping deployment."
+            echo "skip_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ SFTP secrets configured"
+            echo "skip_deploy=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Deploy via SFTP
+        if: steps.check-sftp.outputs.skip_deploy == 'false'
         uses: wlixcc/SFTP-Deploy-Action@v1.0
         with:
           username: ${{ secrets.SFTP_USERNAME }}
@@ -36,7 +53,15 @@ jobs:
           remote_path: /Apps/Printing/backend/
           args: '-o ConnectTimeout=5'
       
-      - name: Notify deployment
+      - name: Skip SFTP deployment (secrets not configured)
+        if: steps.check-sftp.outputs.skip_deploy == 'true'
+        run: |
+          echo "⚠️ SFTP deployment skipped - secrets not configured"
+          echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+          echo "Required secrets: SFTP_SERVER, SFTP_USERNAME, SFTP_SSH_KEY"
+      
+      - name: Notify deployment success
+        if: steps.check-sftp.outputs.skip_deploy == 'false'
         run: |
           echo "✅ Backend API deployed to https://noyanov.com/Apps/Printing/api/"
 
