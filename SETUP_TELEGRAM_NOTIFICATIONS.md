@@ -4,8 +4,8 @@ This guide explains how to set up Telegram notifications for deployment failures
 
 ## Prerequisites
 
-- Telegram bot token: `8571550628:AAGselguQxuV6zzQ2WMlOJw-fzMiOeheKb4`
-- Bot username: `@printing_studio_notificator_bot`
+- Telegram bot token: `YOUR_BOT_TOKEN` (get from @BotFather)
+- Bot username: `@your_bot_username`
 
 ## Step 1: Get Your Telegram Chat ID
 
@@ -13,10 +13,10 @@ You need to get your Telegram Chat ID to receive notifications.
 
 ### Method 1: Using the Bot
 
-1. Open Telegram and search for `@printing_studio_notificator_bot`
+1. Open Telegram and search for your bot username
 2. Start a conversation with the bot by clicking "Start"
 3. Send any message to the bot
-4. Visit: `https://api.telegram.org/bot8571550628:AAGselguQxuV6zzQ2WMlOJw-fzMiOeheKb4/getUpdates`
+4. Visit: `https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates`
 5. Look for `"chat":{"id":` in the response - that's your Chat ID
 
 ### Method 2: Using @userinfobot
@@ -41,7 +41,7 @@ You need to get your Telegram Chat ID to receive notifications.
 
 **Secret 1: TELEGRAM_BOT_TOKEN**
 - Name: `TELEGRAM_BOT_TOKEN`
-- Value: `8571550628:AAGselguQxuV6zzQ2WMlOJw-fzMiOeheKb4`
+- Value: Your bot token from @BotFather (format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
 
 **Secret 2: TELEGRAM_CHAT_ID**
 - Name: `TELEGRAM_CHAT_ID`
@@ -90,7 +90,7 @@ API deployed to: https://noyanov.com/Apps/Printing/api/
 
 1. **Check Chat ID**: Make sure you got the correct Chat ID
 2. **Check Bot Token**: Verify the token is correct in GitHub Secrets
-3. **Start the Bot**: Make sure you've started a conversation with `@printing_studio_notificator_bot`
+3. **Start the Bot**: Make sure you've started a conversation with your bot
 4. **Check Workflow Logs**: Go to Actions → Select workflow run → Check logs for Telegram step
 
 ### Test Bot Manually
@@ -98,7 +98,7 @@ API deployed to: https://noyanov.com/Apps/Printing/api/
 You can test if the bot works by sending a message via curl:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot8571550628:AAGselguQxuV6zzQ2WMlOJw-fzMiOeheKb4/sendMessage" \
+curl -X POST "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage" \
   -d "chat_id=YOUR_CHAT_ID" \
   -d "text=Test message from GitHub Actions"
 ```

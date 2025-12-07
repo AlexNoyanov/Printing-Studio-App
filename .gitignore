@@ -21,6 +21,9 @@ data/
 # README_BACKEND.md
 # database/fix_permissions.sql
 
+# Security incident files
+SECURITY_INCIDENT.md
+
 # Firebase (optional - can be included if you want)
 # .firebaserc
 # firebase.json
