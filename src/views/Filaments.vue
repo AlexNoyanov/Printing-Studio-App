@@ -41,15 +41,15 @@
           </div>
           <!-- Filament line extending from top of spool to right edge -->
           <div class="filament-line-wrapper">
-            <div class="filament-start" :style="{ backgroundColor: filament.value }">
-              <div class="filament-start-glow" :style="{ boxShadow: `0 0 10px ${filament.value}` }"></div>
+            <div class="filament-start" :style="{ backgroundColor: filament.color || filament.value || '#000000' }">
+              <div class="filament-start-glow" :style="{ boxShadow: `0 0 10px ${filament.color || filament.value || '#000000'}` }"></div>
             </div>
-            <div class="filament-line-top" :style="{ backgroundColor: filament.value }">
+            <div class="filament-line-top" :style="{ backgroundColor: filament.color || filament.value || '#000000' }">
               <div 
                 class="line-glow-top" 
                 :style="{ 
-                  boxShadow: `0 0 20px ${filament.value}`,
-                  '--filament-color': filament.value
+                  boxShadow: `0 0 20px ${filament.color || filament.value || '#000000'}`,
+                  '--filament-color': filament.color || filament.value || '#000000'
                 }"
               ></div>
             </div>
@@ -461,6 +461,16 @@ onMounted(() => {
   padding: 2.5rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid #3a3a3a;
+}
+
+.material-type-badge {
+  display: inline-block;
+  background: rgba(135, 206, 235, 0.2);
+  color: #87CEEB;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 1px solid rgba(135, 206, 235, 0.3);
 }
 
 .filament-info-card h2 {
