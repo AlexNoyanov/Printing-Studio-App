@@ -110,14 +110,6 @@
       <div class="filaments-list-card">
         <div class="list-header">
           <h2>Your Filaments ({{ filaments.length }})</h2>
-          <button
-            @click="migrateColors"
-            class="migrate-btn"
-            :disabled="migrating"
-            title="Convert all existing colors from all users to filaments"
-          >
-            {{ migrating ? 'Migrating...' : 'Migrate All Colors to Filaments' }}
-          </button>
         </div>
         <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message" style="white-space: pre-line;">
           {{ migrationMessage }}
