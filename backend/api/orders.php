@@ -42,11 +42,14 @@ try {
                 $colorRows = $stmt->fetchAll();
                 $colors = array_column($colorRows, 'color_name');
                 
-                // Get order links
-                $stmt = $pdo->prepare("SELECT link_url FROM order_links WHERE order_id = ? ORDER BY link_order, id");
+                // Get order links with copies
+                $stmt = $pdo->prepare("SELECT link_url, copies FROM order_links WHERE order_id = ? ORDER BY link_order, id");
                 $stmt->execute([$orderId]);
                 $linkRows = $stmt->fetchAll();
                 $links = array_column($linkRows, 'link_url');
+                $linksWithCopies = array_map(function($row) {
+                    return ['url' => $row['link_url'], 'copies' => intval($row['copies'] ?? 1)];
+                }, $linkRows);
                 
                 // For backward compatibility, include modelLink (first link or old model_link)
                 $modelLink = !empty($links) ? $links[0] : ($order['model_link'] ?? '');
