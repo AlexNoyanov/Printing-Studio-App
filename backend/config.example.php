@@ -2,10 +2,10 @@
 // Database configuration for Printing App
 // Copy this file to config.php and fill in your database credentials
 
-define('DB_HOST', 'your-database-host');
-define('DB_USER', 'your-database-user');
-define('DB_PASS', 'your-database-password');
-define('DB_NAME', 'your-database-name');
+define('DB_HOST', 's136.webhost1.ru');
+define('DB_USER', 'alexn_printing_admin'); // Database username
+define('DB_PASS', 'your-database-password'); // Database password
+define('DB_NAME', 'printing'); // Database name
 define('DB_CHARSET', 'utf8mb4');
 
 // API Base Path
