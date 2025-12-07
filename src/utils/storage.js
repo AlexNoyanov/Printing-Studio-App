@@ -200,9 +200,10 @@ export const storage = {
       // Save all colors (for bulk operations)
       for (const color of colors) {
         try {
-          await apiCall(`/colors.php/${color.id}`, {
+          await apiCall(`/colors.php?id=${color.id}`, {
             method: 'PUT',
             body: JSON.stringify({
+              id: color.id,
               name: color.name,
               value: color.value || color.hex,
               filamentLink: color.filamentLink
