@@ -65,7 +65,7 @@ jobs:
           echo "✅ Backend API deployed to https://noyanov.com/Apps/Printing/api/"
       
       - name: Send Telegram notification on failure
-        if: failure()
+        if: failure() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != ''
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -82,3 +82,9 @@ jobs:
             *Run ID:* ${{ github.run_id }}
             
             View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      
+      - name: Skip Telegram notification (secrets not configured)
+        if: failure() && (secrets.TELEGRAM_BOT_TOKEN == '' || secrets.TELEGRAM_CHAT_ID == '')
+        run: |
+          echo "⚠️ Telegram notification skipped - TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured"
+          echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
