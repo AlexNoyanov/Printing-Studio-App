@@ -32,7 +32,19 @@ jobs:
         id: build
         run: npm run build:firebase
       
+      - name: Check Firebase secrets
+        id: check-firebase
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+            echo "⚠️ FIREBASE_SERVICE_ACCOUNT not configured. Skipping deployment."
+            echo "skip_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Firebase secrets configured"
+            echo "skip_deploy=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Deploy to Firebase
+        if: steps.check-firebase.outputs.skip_deploy == 'false'
         id: deploy
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -41,8 +53,24 @@ jobs:
           channelId: live
           projectId: printing-studio-app-4e0e6
       
+      - name: Skip Firebase deployment (secrets not configured)
+        if: steps.check-firebase.outputs.skip_deploy == 'true'
+        run: |
+          echo "⚠️ Firebase deployment skipped - FIREBASE_SERVICE_ACCOUNT not configured"
+          echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+      
+      - name: Check Telegram secrets
+        id: check-telegram
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "telegram_configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "telegram_configured=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Send Telegram notification on failure
-        if: failure() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != ''
+        if: failure() && steps.check-telegram.outputs.telegram_configured == 'true'
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -61,7 +89,7 @@ jobs:
             View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       
       - name: Skip Telegram notification (secrets not configured)
-        if: failure() && (secrets.TELEGRAM_BOT_TOKEN == '' || secrets.TELEGRAM_CHAT_ID == '')
+        if: failure() && steps.check-telegram.outputs.telegram_configured == 'false'
         run: |
           echo "⚠️ Telegram notification skipped - TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured"
           echo "Configure secrets at: https://github.com/${{ github.repository }}/settings/secrets/actions"
