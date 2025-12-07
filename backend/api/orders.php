@@ -23,22 +23,37 @@ $status = $_GET['status'] ?? null;
 
 try {
     $pdo = getDBConnection();
+    
+    // Helper function to ensure order_links table exists
+    $ensureOrderLinksTable = function() use ($pdo) {
+        try {
+            // Check if table exists
+            $stmt = $pdo->query("SHOW TABLES LIKE 'order_links'");
+            if ($stmt->rowCount() === 0) {
+                // Table doesn't exist, create it
+                $pdo->exec("CREATE TABLE order_links (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    order_id VARCHAR(50) NOT NULL,
+                    link_url TEXT NOT NULL,
+                    copies INT NOT NULL DEFAULT 1,
+                    link_order INT NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_order_id (order_id),
+                    INDEX idx_link_order (link_order),
+                    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            }
+        } catch (PDOException $e) {
+            // If table creation fails, log but don't throw (might already exist)
+            error_log("Error ensuring order_links table: " . $e->getMessage());
+        }
+    };
+    
+    // Ensure table exists before any operations
+    $ensureOrderLinksTable();
 
     switch ($method) {
         case 'GET':
-            // Ensure order_links table exists
-            $pdo->exec("CREATE TABLE IF NOT EXISTS order_links (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                order_id VARCHAR(50) NOT NULL,
-                link_url TEXT NOT NULL,
-                copies INT NOT NULL DEFAULT 1,
-                link_order INT NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_order_id (order_id),
-                INDEX idx_link_order (link_order),
-                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-            
             if ($orderId) {
                 // Get single order with colors
                 $stmt = $pdo->prepare("SELECT id, user_id, user_name, model_link, comment, status, created_at, updated_at FROM orders WHERE id = ?");
@@ -161,19 +176,6 @@ try {
         case 'POST':
             // Create new order
             $data = getRequestBody();
-            
-            // Ensure order_links table exists
-            $pdo->exec("CREATE TABLE IF NOT EXISTS order_links (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                order_id VARCHAR(50) NOT NULL,
-                link_url TEXT NOT NULL,
-                copies INT NOT NULL DEFAULT 1,
-                link_order INT NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_order_id (order_id),
-                INDEX idx_link_order (link_order),
-                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             
             // Support both modelLink (single) and modelLinks (array) for backward compatibility
             $modelLinks = [];
