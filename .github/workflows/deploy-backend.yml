@@ -29,6 +29,7 @@ jobs:
           find api -name "*.php" -exec php -l {} \;
       
       - name: Deploy backend to server via FTP
+        id: deploy-backend
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -45,6 +46,7 @@ jobs:
           dangerous-clean-slate: false
       
       - name: Deploy API endpoints to server via FTP
+        id: deploy-api
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -57,6 +59,41 @@ jobs:
             **/.git*/**
           dangerous-clean-slate: false
       
-      - name: Notify deployment
+      - name: Notify deployment success
+        if: success()
         run: |
           echo "✅ Backend API deployed to https://noyanov.com/Apps/Printing/api/"
+      
+      - name: Send Telegram notification on failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ❌ *Backend Deployment Failed*
+            
+            *Repository:* Printing Studio App
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            *Author:* ${{ github.actor }}
+            
+            *Workflow:* ${{ github.workflow }}
+            *Run ID:* ${{ github.run_id }}
+            
+            View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      
+      - name: Send Telegram notification on success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            ✅ *Backend Deployment Successful*
+            
+            *Repository:* Printing Studio App
+            *Branch:* ${{ github.ref_name }}
+            *Commit:* ${{ github.sha }}
+            
+            API deployed to: https://noyanov.com/Apps/Printing/api/
