@@ -65,10 +65,19 @@
           
           <div class="order-details">
             <div class="detail-item">
-              <strong>Model Link:</strong>
-              <a :href="order.modelLink" target="_blank" rel="noopener noreferrer">
-                {{ order.modelLink }}
-              </a>
+              <strong>Model Links:</strong>
+              <div class="links-list">
+                <a
+                  v-for="(link, index) in getOrderLinks(order)"
+                  :key="index"
+                  :href="link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="model-link"
+                >
+                  {{ link }}
+                </a>
+              </div>
             </div>
             
             <div class="detail-item">
@@ -175,6 +184,17 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const getOrderLinks = (order) => {
+  // Support both modelLinks (array) and modelLink (single) for backward compatibility
+  if (order.modelLinks && Array.isArray(order.modelLinks) && order.modelLinks.length > 0) {
+    return order.modelLinks.filter(link => link && link.trim() !== '')
+  }
+  if (order.modelLink && order.modelLink.trim() !== '') {
+    return [order.modelLink]
+  }
+  return []
 }
 
 onMounted(() => {
@@ -398,6 +418,26 @@ onMounted(() => {
 
 .detail-item a:hover {
   text-decoration: underline;
+}
+
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.model-link {
+  display: block;
+  padding: 0.5rem;
+  background: rgba(135, 206, 235, 0.1);
+  border-radius: 5px;
+  border: 1px solid rgba(135, 206, 235, 0.2);
+  transition: background 0.3s;
+}
+
+.model-link:hover {
+  background: rgba(135, 206, 235, 0.2);
 }
 
 .detail-item p {

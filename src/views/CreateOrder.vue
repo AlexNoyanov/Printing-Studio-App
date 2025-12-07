@@ -6,15 +6,41 @@
     <div class="order-form-card">
       <form @submit.prevent="handleSubmit" class="order-form">
         <div class="form-group">
-          <label for="modelLink">Model Link *</label>
-          <input
-            id="modelLink"
-            v-model="modelLink"
-            type="url"
-            required
-            placeholder="https://example.com/model.stl"
-          />
-          <small>Link to your 3D model file</small>
+          <label>Model Links *</label>
+          <div class="links-container">
+            <div
+              v-for="(link, index) in modelLinks"
+              :key="index"
+              class="link-input-group"
+            >
+              <input
+                :id="`modelLink-${index}`"
+                v-model="modelLinks[index]"
+                type="url"
+                :required="index === 0"
+                :placeholder="`https://example.com/model${index + 1}.stl`"
+                class="link-input"
+              />
+              <button
+                v-if="modelLinks.length > 1"
+                type="button"
+                @click="removeLink(index)"
+                class="remove-link-btn"
+                title="Remove link"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              type="button"
+              @click="addLink"
+              class="add-link-btn"
+              title="Add another link"
+            >
+              + Add Link
+            </button>
+          </div>
+          <small>Add one or more links to your 3D model files</small>
         </div>
         
         <div class="form-group">
@@ -73,11 +99,21 @@ import { useRouter } from 'vue-router'
 import { storage } from '../utils/storage'
 
 const router = useRouter()
-const modelLink = ref('')
+const modelLinks = ref([''])
 const selectedColors = ref([])
 const comment = ref('')
 const error = ref('')
 const success = ref('')
+
+const addLink = () => {
+  modelLinks.value.push('')
+}
+
+const removeLink = (index) => {
+  if (modelLinks.value.length > 1) {
+    modelLinks.value.splice(index, 1)
+  }
+}
 
 // Available material colors
 const availableColors = ref([
@@ -112,6 +148,13 @@ const handleSubmit = async () => {
     return
   }
   
+  // Filter out empty links
+  const validLinks = modelLinks.value.filter(link => link.trim() !== '')
+  if (validLinks.length === 0) {
+    error.value = 'Please add at least one model link'
+    return
+  }
+  
   const user = getCurrentUser()
   if (!user) {
     error.value = 'User not found. Please login again.'
@@ -124,7 +167,8 @@ const handleSubmit = async () => {
       id: Date.now().toString(),
       userId: user.id,
       userName: user.username,
-      modelLink: modelLink.value,
+      modelLink: validLinks[0], // Backward compatibility
+      modelLinks: validLinks, // New: array of all links
       colors: selectedColors.value.map(id => {
         const color = availableColors.value.find(c => c.id === id)
         return color ? color.name : id
@@ -214,6 +258,59 @@ const handleSubmit = async () => {
 .form-group textarea:focus {
   outline: none;
   border-color: #87CEEB;
+}
+
+.links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.link-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.link-input {
+  flex: 1;
+}
+
+.remove-link-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 5px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.remove-link-btn:hover {
+  background: #c0392b;
+}
+
+.add-link-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+  align-self: flex-start;
+}
+
+.add-link-btn:hover {
+  background: #229954;
 }
 
 .form-group input[type="url"]::placeholder,

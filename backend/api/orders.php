@@ -42,11 +42,21 @@ try {
                 $colorRows = $stmt->fetchAll();
                 $colors = array_column($colorRows, 'color_name');
                 
+                // Get order links
+                $stmt = $pdo->prepare("SELECT link_url FROM order_links WHERE order_id = ? ORDER BY link_order, id");
+                $stmt->execute([$orderId]);
+                $linkRows = $stmt->fetchAll();
+                $links = array_column($linkRows, 'link_url');
+                
+                // For backward compatibility, include modelLink (first link or old model_link)
+                $modelLink = !empty($links) ? $links[0] : ($order['model_link'] ?? '');
+                
                 sendJSON([
                     'id' => $order['id'],
                     'userId' => $order['user_id'],
                     'userName' => $order['user_name'],
-                    'modelLink' => $order['model_link'],
+                    'modelLink' => $modelLink, // Backward compatibility
+                    'modelLinks' => $links, // New: array of all links
                     'comment' => $order['comment'],
                     'status' => $order['status'],
                     'colors' => $colors,
@@ -83,12 +93,33 @@ try {
                 $stmt->execute($params);
                 $orders = $stmt->fetchAll();
                 
-                $result = array_map(function($order) {
+                // Get links for all orders
+                $orderIds = array_column($orders, 'id');
+                $linksMap = [];
+                if (!empty($orderIds)) {
+                    $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+                    $linkStmt = $pdo->prepare("SELECT order_id, link_url FROM order_links WHERE order_id IN ($placeholders) ORDER BY link_order, id");
+                    $linkStmt->execute($orderIds);
+                    $linkRows = $linkStmt->fetchAll();
+                    
+                    foreach ($linkRows as $linkRow) {
+                        if (!isset($linksMap[$linkRow['order_id']])) {
+                            $linksMap[$linkRow['order_id']] = [];
+                        }
+                        $linksMap[$linkRow['order_id']][] = $linkRow['link_url'];
+                    }
+                }
+                
+                $result = array_map(function($order) use ($linksMap) {
+                    $links = $linksMap[$order['id']] ?? [];
+                    $modelLink = !empty($links) ? $links[0] : ($order['model_link'] ?? '');
+                    
                     return [
                         'id' => $order['id'],
                         'userId' => $order['user_id'],
                         'userName' => $order['user_name'],
-                        'modelLink' => $order['model_link'],
+                        'modelLink' => $modelLink, // Backward compatibility
+                        'modelLinks' => $links, // New: array of all links
                         'comment' => $order['comment'],
                         'status' => $order['status'],
                         'colors' => $order['colors'] ? explode(',', $order['colors']) : [],
@@ -105,8 +136,18 @@ try {
             // Create new order
             $data = getRequestBody();
             
+            // Support both modelLink (single) and modelLinks (array) for backward compatibility
+            $modelLinks = [];
+            if (isset($data['modelLinks']) && is_array($data['modelLinks'])) {
+                $modelLinks = array_filter($data['modelLinks'], function($link) {
+                    return !empty(trim($link));
+                });
+            } elseif (isset($data['modelLink']) && !empty($data['modelLink'])) {
+                $modelLinks = [$data['modelLink']];
+            }
+            
             if (!isset($data['id']) || !isset($data['userId']) || !isset($data['userName']) || 
-                !isset($data['modelLink']) || !isset($data['colors']) || !is_array($data['colors']) || 
+                empty($modelLinks) || !isset($data['colors']) || !is_array($data['colors']) || 
                 empty($data['colors'])) {
                 sendJSON(['error' => 'Missing required fields'], 400);
             }
@@ -114,16 +155,25 @@ try {
             $pdo->beginTransaction();
             
             try {
+                // Use first link as model_link for backward compatibility
+                $firstLink = $modelLinks[0];
+                
                 // Insert order
                 $stmt = $pdo->prepare("INSERT INTO orders (id, user_id, user_name, model_link, comment, status) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $data['id'],
                     $data['userId'],
                     $data['userName'],
-                    $data['modelLink'],
+                    $firstLink,
                     $data['comment'] ?? null,
                     $data['status'] ?? 'Created'
                 ]);
+                
+                // Insert order links
+                $linkStmt = $pdo->prepare("INSERT INTO order_links (order_id, link_url, link_order) VALUES (?, ?, ?)");
+                foreach ($modelLinks as $index => $link) {
+                    $linkStmt->execute([$data['id'], $link, $index]);
+                }
                 
                 // Insert order colors
                 $stmt = $pdo->prepare("INSERT INTO order_colors (order_id, color_id, color_name) VALUES (?, ?, ?)");
