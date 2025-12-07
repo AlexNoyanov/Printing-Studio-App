@@ -126,20 +126,32 @@ const removeLink = (index) => {
   }
 }
 
-// Available colors from database
+// Available filaments from database
 const availableColors = ref([])
 
 const loadColors = async () => {
   try {
-    // Load colors from database (all colors, not user-specific for order creation)
-    const colors = await storage.getColors()
-    availableColors.value = colors.map(color => ({
-      id: color.id,
-      name: color.name,
-      hex: color.value || color.hex || '#ffffff'
-    }))
+    // Load filaments (materials) from database - these are what customers can select
+    // Try materials first (new unified system)
+    const materials = await storage.getMaterials()
+    if (materials && materials.length > 0) {
+      availableColors.value = materials.map(material => ({
+        id: material.id,
+        name: material.name,
+        hex: material.color || '#ffffff',
+        materialType: material.materialType
+      }))
+    } else {
+      // Fallback to colors for backward compatibility
+      const colors = await storage.getColors()
+      availableColors.value = colors.map(color => ({
+        id: color.id,
+        name: color.name,
+        hex: color.value || color.hex || '#ffffff'
+      }))
+    }
   } catch (e) {
-    console.error('Error loading colors:', e)
+    console.error('Error loading filaments/colors:', e)
     // Fallback to empty array if API fails
     availableColors.value = []
   }

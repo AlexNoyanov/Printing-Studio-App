@@ -4,9 +4,8 @@ import Register from '../views/Register.vue'
 import CreateOrder from '../views/CreateOrder.vue'
 import MyOrders from '../views/MyOrders.vue'
 import Dashboard from '../views/Dashboard.vue'
-import Colors from '../views/Colors.vue'
+import FilamentsList from '../views/FilamentsList.vue'
 import Filaments from '../views/Filaments.vue'
-import Materials from '../views/Materials.vue'
 
 const routes = [
   {
@@ -42,21 +41,15 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'printer' }
   },
   {
-    path: '/colors',
-    name: 'Colors',
-    component: Colors,
+    path: '/filaments',
+    name: 'FilamentsList',
+    component: FilamentsList,
     meta: { requiresAuth: true, requiresRole: 'printer' }
   },
   {
     path: '/filaments/:id',
     name: 'Filaments',
     component: Filaments,
-    meta: { requiresAuth: true, requiresRole: 'printer' }
-  },
-  {
-    path: '/materials',
-    name: 'Materials',
-    component: Materials,
     meta: { requiresAuth: true, requiresRole: 'printer' }
   }
 ]

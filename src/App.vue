@@ -10,8 +10,7 @@
           <router-link to="/orders" v-if="userRole === 'user'">My Orders</router-link>
           <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
           <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
-          <router-link to="/colors" v-if="userRole === 'printer'">Colors</router-link>
-          <router-link to="/materials" v-if="userRole === 'printer'">Materials</router-link>
+          <router-link to="/filaments" v-if="userRole === 'printer'">Filaments</router-link>
           <button @click="logout" class="logout-btn">Logout</button>
         </div>
       </div>

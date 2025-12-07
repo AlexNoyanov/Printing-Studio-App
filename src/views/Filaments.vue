@@ -2,7 +2,7 @@
   <div class="container">
     <div class="page-header">
       <h1>Filament Details</h1>
-      <router-link to="/colors" class="back-link">← Back to Colors</router-link>
+      <router-link to="/filaments" class="back-link">← Back to Filaments</router-link>
     </div>
 
     <div v-if="loading" class="loading">
@@ -11,7 +11,7 @@
 
     <div v-else-if="!filament" class="not-found">
       <p>Filament not found</p>
-      <router-link to="/colors" class="back-btn">Back to Colors</router-link>
+      <router-link to="/filaments" class="back-btn">Back to Filaments</router-link>
     </div>
 
     <div v-else class="filament-details">
@@ -132,20 +132,43 @@ const adjustBrightness = (hex, percent) => {
 
 const loadFilament = async () => {
   loading.value = true
-  const colorId = route.params.id
+  const filamentId = route.params.id
   const user = getCurrentUser()
 
-  if (!user || !colorId) {
+  if (!user || !filamentId) {
     loading.value = false
     return
   }
 
   try {
-    const allColors = await storage.getColors(user.id)
-    const foundColor = allColors.find(c => c.id === colorId)
-
-    if (foundColor) {
-      filament.value = foundColor
+    // Try to load from materials first (new unified system)
+    const allMaterials = await storage.getMaterials(user.id)
+    const foundMaterial = allMaterials.find(m => m.id === filamentId)
+    
+    if (foundMaterial) {
+      // Map material to filament format for display
+      filament.value = {
+        id: foundMaterial.id,
+        name: foundMaterial.name,
+        value: foundMaterial.color || '#000000',
+        color: foundMaterial.color || '#000000',
+        materialType: foundMaterial.materialType,
+        filamentLink: foundMaterial.shopLink,
+        shopLink: foundMaterial.shopLink
+      }
+    } else {
+      // Fallback to colors for backward compatibility
+      const allColors = await storage.getColors(user.id)
+      const foundColor = allColors.find(c => c.id === filamentId)
+      
+      if (foundColor) {
+        filament.value = {
+          ...foundColor,
+          color: foundColor.value || foundColor.hex || '#000000',
+          materialType: 'PLA', // Default for old colors
+          shopLink: foundColor.filamentLink
+        }
+      }
     }
   } catch (e) {
     console.error('Error loading filament:', e)
