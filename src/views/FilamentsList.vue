@@ -108,9 +108,25 @@
 
       <!-- Filaments List -->
       <div class="filaments-list-card">
-        <h2>Your Filaments ({{ filaments.length }})</h2>
+        <div class="list-header">
+          <h2>Your Filaments ({{ filaments.length }})</h2>
+          <button
+            @click="migrateColors"
+            class="migrate-btn"
+            :disabled="migrating"
+            title="Convert existing colors to filaments"
+          >
+            {{ migrating ? 'Migrating...' : 'Migrate Colors to Filaments' }}
+          </button>
+        </div>
+        <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message">
+          {{ migrationMessage }}
+        </div>
         <div v-if="filaments.length === 0" class="empty-filaments">
           <p>No filaments added yet. Add your first filament above!</p>
+          <p v-if="hasColors" class="migration-hint">
+            You have existing colors. Click "Migrate Colors to Filaments" to convert them.
+          </p>
         </div>
         <div v-else class="filaments-grid">
           <router-link
@@ -177,6 +193,10 @@ const filamentForm = ref({
 const editingFilament = ref(null)
 const error = ref('')
 const success = ref('')
+const migrating = ref(false)
+const migrationMessage = ref('')
+const migrationMessageClass = ref('')
+const hasColors = ref(false)
 
 const getCurrentUser = () => {
   const userStr = localStorage.getItem('currentUser')
@@ -195,9 +215,61 @@ const loadFilaments = async () => {
   try {
     const allFilaments = await storage.getMaterials(user.id)
     filaments.value = allFilaments
+    
+    // Check if user has colors that can be migrated
+    try {
+      const colors = await storage.getColors(user.id)
+      hasColors.value = colors.length > 0
+    } catch (e) {
+      // Ignore error, just don't show migration hint
+      hasColors.value = false
+    }
   } catch (e) {
     console.error('Error loading filaments:', e)
     error.value = 'Failed to load filaments. Please try again.'
+  }
+}
+
+const migrateColors = async () => {
+  const user = getCurrentUser()
+  if (!user) {
+    error.value = 'User not found. Please login again.'
+    return
+  }
+  
+  if (!confirm('This will convert all your existing colors to filaments with default material type "PLA". Continue?')) {
+    return
+  }
+  
+  migrating.value = true
+  migrationMessage.value = ''
+  error.value = ''
+  success.value = ''
+  
+  try {
+    const result = await storage.migrateColorsToFilaments(user.id)
+    
+    if (result.success) {
+      migrationMessage.value = result.message + ` (${result.migrated} migrated, ${result.skipped} skipped)`
+      migrationMessageClass.value = 'success'
+      
+      // Reload filaments
+      await loadFilaments()
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        migrationMessage.value = ''
+      }, 5000)
+    } else {
+      migrationMessage.value = result.message || 'Migration completed with warnings'
+      migrationMessageClass.value = 'info'
+    }
+  } catch (e) {
+    console.error('Error migrating colors:', e)
+    migrationMessage.value = 'Failed to migrate colors: ' + (e.message || 'Unknown error')
+    migrationMessageClass.value = 'error'
+  } finally {
+    migrating.value = false
   }
 }
 
@@ -368,6 +440,69 @@ onMounted(() => {
   color: #a0d4e8;
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.migrate-btn {
+  background: #f39c12;
+  color: #000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.migrate-btn:hover:not(:disabled) {
+  background: #e67e22;
+}
+
+.migrate-btn:disabled {
+  background: #3a3a3a;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.migration-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.migration-message.success {
+  color: #51cf66;
+  background: rgba(81, 207, 102, 0.1);
+  border: 1px solid rgba(81, 207, 102, 0.3);
+}
+
+.migration-message.info {
+  color: #87CEEB;
+  background: rgba(135, 206, 235, 0.1);
+  border: 1px solid rgba(135, 206, 235, 0.3);
+}
+
+.migration-message.error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.migration-hint {
+  color: #87CEEB;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  font-style: italic;
 }
 
 .form-group {

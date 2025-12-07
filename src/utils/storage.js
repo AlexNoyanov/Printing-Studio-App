@@ -361,6 +361,20 @@ export const storage = {
       console.error('Error deleting material:', e)
       throw e
     }
+  },
+
+  // Migrate colors to filaments
+  async migrateColorsToFilaments(userId) {
+    try {
+      const result = await apiCall('/migrate_colors.php', {
+        method: 'POST',
+        body: JSON.stringify({ userId })
+      })
+      return result
+    } catch (e) {
+      console.error('Error migrating colors to filaments:', e)
+      throw e
+    }
   }
 }
 
