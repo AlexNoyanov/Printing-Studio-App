@@ -26,6 +26,19 @@ try {
 
     switch ($method) {
         case 'GET':
+            // Ensure order_links table exists
+            $pdo->exec("CREATE TABLE IF NOT EXISTS order_links (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id VARCHAR(50) NOT NULL,
+                link_url TEXT NOT NULL,
+                copies INT NOT NULL DEFAULT 1,
+                link_order INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_order_id (order_id),
+                INDEX idx_link_order (link_order),
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            
             if ($orderId) {
                 // Get single order with colors
                 $stmt = $pdo->prepare("SELECT id, user_id, user_name, model_link, comment, status, created_at, updated_at FROM orders WHERE id = ?");
