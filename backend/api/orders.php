@@ -7,10 +7,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['REQUEST_URI'];
 $pathParts = explode('/', trim(parse_url($path, PHP_URL_PATH), '/'));
 
-// Extract order ID if present
+// Extract order ID if present (from path or query)
 $orderId = null;
 if (count($pathParts) >= 4 && $pathParts[3] === 'orders' && isset($pathParts[4])) {
     $orderId = $pathParts[4];
+}
+// Also check query parameter for ID
+if (!$orderId && isset($_GET['id'])) {
+    $orderId = $_GET['id'];
 }
 
 // Get query parameters
@@ -124,11 +128,31 @@ try {
                 // Insert order colors
                 $stmt = $pdo->prepare("INSERT INTO order_colors (order_id, color_id, color_name) VALUES (?, ?, ?)");
                 foreach ($data['colors'] as $colorName) {
+                    if (empty($colorName)) {
+                        continue; // Skip empty color names
+                    }
+                    
                     // Try to find color ID for this user
                     $colorStmt = $pdo->prepare("SELECT id FROM colors WHERE name = ? AND user_id = ? LIMIT 1");
                     $colorStmt->execute([$colorName, $data['userId']]);
                     $colorRow = $colorStmt->fetch();
                     $colorId = $colorRow ? $colorRow['id'] : null;
+                    
+                    // If color doesn't exist, create it automatically
+                    if ($colorId === null) {
+                        // Generate a color ID
+                        $colorId = 'color_' . time() . '_' . rand(1000, 9999);
+                        
+                        // Create the color entry
+                        $colorInsertStmt = $pdo->prepare("INSERT INTO colors (id, user_id, name, value, filament_link) VALUES (?, ?, ?, ?, ?)");
+                        $colorInsertStmt->execute([
+                            $colorId,
+                            $data['userId'],
+                            $colorName,
+                            $colorName, // Use color name as value if no hex provided
+                            null
+                        ]);
+                    }
                     
                     $stmt->execute([$data['id'], $colorId, $colorName]);
                 }

@@ -98,7 +98,7 @@ export const storage = {
   // Orders storage
   async getOrders(userId = null) {
     try {
-      const endpoint = userId ? `/orders?userId=${userId}` : '/orders'
+      const endpoint = userId ? `/orders.php?userId=${userId}` : '/orders.php'
       return await apiCall(endpoint)
     } catch (e) {
       console.error('Error reading orders:', e)
@@ -120,7 +120,7 @@ export const storage = {
       // This is a simplified version - in practice, you might want to batch
       for (const order of orders) {
         try {
-          await apiCall(`/orders/${order.id}`, {
+          await apiCall(`/orders.php?id=${order.id}`, {
             method: 'PUT',
             body: JSON.stringify(order)
           })
@@ -160,7 +160,7 @@ export const storage = {
 
   async updateOrder(orderId, updates) {
     try {
-      const result = await apiCall(`/orders/${orderId}`, {
+      const result = await apiCall(`/orders.php?id=${orderId}`, {
         method: 'PUT',
         body: JSON.stringify(updates)
       })
