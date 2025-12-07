@@ -174,7 +174,7 @@ export const storage = {
   // Colors storage
   async getColors(userId = null) {
     try {
-      const endpoint = userId ? `/colors?userId=${userId}` : '/colors'
+      const endpoint = userId ? `/colors.php?userId=${userId}` : '/colors.php'
       const colors = await apiCall(endpoint)
       // Map hex to value for compatibility
       return colors.map(c => ({
@@ -200,7 +200,7 @@ export const storage = {
       // Save all colors (for bulk operations)
       for (const color of colors) {
         try {
-          await apiCall(`/colors/${color.id}`, {
+          await apiCall(`/colors.php/${color.id}`, {
             method: 'PUT',
             body: JSON.stringify({
               name: color.name,
@@ -256,9 +256,10 @@ export const storage = {
 
   async updateColor(colorId, updates) {
     try {
-      const result = await apiCall(`/colors/${colorId}`, {
+      const result = await apiCall(`/colors.php?id=${colorId}`, {
         method: 'PUT',
         body: JSON.stringify({
+          id: colorId,
           name: updates.name,
           value: updates.value || updates.hex,
           filamentLink: updates.filamentLink
@@ -273,7 +274,7 @@ export const storage = {
 
   async deleteColor(colorId) {
     try {
-      const result = await apiCall(`/colors/${colorId}`, {
+      const result = await apiCall(`/colors.php?id=${colorId}`, {
         method: 'DELETE'
       })
       return result

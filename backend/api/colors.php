@@ -7,10 +7,14 @@ $method = $_SERVER['REQUEST_METHOD'];
 $path = $_SERVER['REQUEST_URI'];
 $pathParts = explode('/', trim(parse_url($path, PHP_URL_PATH), '/'));
 
-// Extract color ID if present
+// Extract color ID if present (from path or query)
 $colorId = null;
 if (count($pathParts) >= 4 && $pathParts[3] === 'colors' && isset($pathParts[4])) {
     $colorId = $pathParts[4];
+}
+// Also check query parameter for ID
+if (!$colorId && isset($_GET['id'])) {
+    $colorId = $_GET['id'];
 }
 
 // Get query parameters
