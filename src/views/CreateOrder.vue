@@ -115,19 +115,24 @@ const removeLink = (index) => {
   }
 }
 
-// Available material colors
-const availableColors = ref([
-  { id: 'red', name: 'Red', hex: '#e74c3c' },
-  { id: 'blue', name: 'Blue', hex: '#3498db' },
-  { id: 'green', name: 'Green', hex: '#27ae60' },
-  { id: 'yellow', name: 'Yellow', hex: '#f1c40f' },
-  { id: 'black', name: 'Black', hex: '#2c3e50' },
-  { id: 'white', name: 'White', hex: '#ecf0f1' },
-  { id: 'orange', name: 'Orange', hex: '#e67e22' },
-  { id: 'purple', name: 'Purple', hex: '#9b59b6' },
-  { id: 'pink', name: 'Pink', hex: '#e91e63' },
-  { id: 'gray', name: 'Gray', hex: '#95a5a6' }
-])
+// Available colors from database
+const availableColors = ref([])
+
+const loadColors = async () => {
+  try {
+    // Load colors from database (all colors, not user-specific for order creation)
+    const colors = await storage.getColors()
+    availableColors.value = colors.map(color => ({
+      id: color.id,
+      name: color.name,
+      hex: color.value || color.hex || '#ffffff'
+    }))
+  } catch (e) {
+    console.error('Error loading colors:', e)
+    // Fallback to empty array if API fails
+    availableColors.value = []
+  }
+}
 
 const getCurrentUser = () => {
   const userStr = localStorage.getItem('currentUser')
@@ -145,6 +150,11 @@ const handleSubmit = async () => {
   
   if (selectedColors.value.length === 0) {
     error.value = 'Please select at least one color'
+    return
+  }
+  
+  if (availableColors.value.length === 0) {
+    error.value = 'No colors available. Please contact the printer owner.'
     return
   }
   
@@ -191,6 +201,10 @@ const handleSubmit = async () => {
     console.error('Create order error:', e)
   }
 }
+
+onMounted(() => {
+  loadColors()
+})
 </script>
 
 <style scoped>
@@ -369,10 +383,18 @@ const handleSubmit = async () => {
 }
 
 .color-preview {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid #ddd;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.loading-colors {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
 }
 
 .error-message {

@@ -305,6 +305,62 @@ export const storage = {
       `${c.id}|${c.userId}|${c.name}|${c.value || c.hex}|${c.filamentLink || ''}`
     ).join('\n')
     localStorage.setItem('colors_text', text)
+  },
+
+  // Materials storage
+  async getMaterials(userId = null) {
+    try {
+      const endpoint = userId ? `/materials.php?userId=${userId}` : '/materials.php'
+      return await apiCall(endpoint)
+    } catch (e) {
+      console.error('Error reading materials:', e)
+      return []
+    }
+  },
+
+  async createMaterial(material) {
+    try {
+      const result = await apiCall('/materials.php', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: material.id,
+          userId: material.userId,
+          name: material.name,
+          color: material.color,
+          materialType: material.materialType,
+          shopLink: material.shopLink
+        })
+      })
+      return result
+    } catch (e) {
+      console.error('Error creating material:', e)
+      throw e
+    }
+  },
+
+  async updateMaterial(materialId, updates) {
+    try {
+      const result = await apiCall(`/materials.php?id=${materialId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+      })
+      return result
+    } catch (e) {
+      console.error('Error updating material:', e)
+      throw e
+    }
+  },
+
+  async deleteMaterial(materialId) {
+    try {
+      const result = await apiCall(`/materials.php?id=${materialId}`, {
+        method: 'DELETE'
+      })
+      return result
+    } catch (e) {
+      console.error('Error deleting material:', e)
+      throw e
+    }
   }
 }
 
