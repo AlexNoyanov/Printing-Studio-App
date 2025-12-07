@@ -210,16 +210,42 @@ try {
                         continue; // Skip empty color names
                     }
                     
-                    // Try to find color ID for this user
-                    $colorStmt = $pdo->prepare("SELECT id FROM colors WHERE name = ? AND user_id = ? LIMIT 1");
+                    // Try to find color ID for this user (check both colors and materials tables)
+                    $colorStmt = $pdo->prepare("SELECT id, value FROM colors WHERE name = ? AND user_id = ? LIMIT 1");
                     $colorStmt->execute([$colorName, $data['userId']]);
                     $colorRow = $colorStmt->fetch();
                     $colorId = $colorRow ? $colorRow['id'] : null;
+                    $hexValue = $colorRow ? $colorRow['value'] : null;
+                    
+                    // If not found in colors, check materials table (filaments)
+                    if ($colorId === null) {
+                        $materialStmt = $pdo->prepare("SELECT id, color FROM materials WHERE name = ? AND user_id = ? LIMIT 1");
+                        $materialStmt->execute([$colorName, $data['userId']]);
+                        $materialRow = $materialStmt->fetch();
+                        if ($materialRow) {
+                            $colorId = $materialRow['id'];
+                            $hexValue = $materialRow['color'];
+                        }
+                    }
                     
                     // If color doesn't exist, create it automatically
                     if ($colorId === null) {
                         // Generate a color ID
                         $colorId = 'color_' . time() . '_' . rand(1000, 9999);
+                        
+                        // Default hex color if no specific color provided
+                        // Try to extract hex from colorName if it looks like a hex code, otherwise use default
+                        if (!$hexValue) {
+                            $hexValue = '#FFFFFF'; // Default white
+                            if (preg_match('/^#?[0-9A-Fa-f]{6}$/', $colorName)) {
+                                $hexValue = strpos($colorName, '#') === 0 ? $colorName : '#' . $colorName;
+                            } elseif (strlen($colorName) <= 7 && preg_match('/^#[0-9A-Fa-f]{3,6}$/', $colorName)) {
+                                $hexValue = $colorName;
+                            }
+                        }
+                        
+                        // Ensure hex value is not longer than 50 characters (new column limit)
+                        $hexValue = substr($hexValue, 0, 50);
                         
                         // Create the color entry
                         $colorInsertStmt = $pdo->prepare("INSERT INTO colors (id, user_id, name, value, filament_link) VALUES (?, ?, ?, ?, ?)");
@@ -227,7 +253,7 @@ try {
                             $colorId,
                             $data['userId'],
                             $colorName,
-                            $colorName, // Use color name as value if no hex provided
+                            $hexValue, // Use hex value, not color name
                             null
                         ]);
                     }
