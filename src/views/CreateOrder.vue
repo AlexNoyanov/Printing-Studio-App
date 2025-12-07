@@ -408,6 +408,7 @@ onMounted(() => {
   transition: all 0.3s;
   background: #1a1a1a;
   color: #e0e0e0;
+  min-height: 60px;
 }
 
 .color-option:hover {
@@ -432,10 +433,16 @@ onMounted(() => {
 .color-preview {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
   border: 2px solid #ddd;
   flex-shrink: 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: block;
+  aspect-ratio: 1 / 1;
 }
 
 .loading-colors {
