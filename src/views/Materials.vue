@@ -125,7 +125,7 @@
             <div class="material-info">
               <h3>{{ material.name }}</h3>
               <p class="material-type">{{ material.materialType }}</p>
-              <p class="material-color">{{ material.color.toUpperCase() }}</p>
+              <p class="material-color">{{ material.color ? material.color.toUpperCase() : 'N/A' }}</p>
               <a
                 v-if="material.shopLink"
                 :href="material.shopLink"

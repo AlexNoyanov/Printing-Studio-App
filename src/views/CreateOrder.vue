@@ -15,11 +15,22 @@
             >
               <input
                 :id="`modelLink-${index}`"
-                v-model="modelLinks[index]"
+                v-model="modelLinks[index].url"
                 type="url"
                 :required="index === 0"
                 :placeholder="`https://example.com/model${index + 1}.stl`"
                 class="link-input"
+              />
+              <input
+                :id="`modelCopies-${index}`"
+                v-model.number="modelLinks[index].copies"
+                type="number"
+                min="1"
+                max="100"
+                :required="index === 0"
+                placeholder="Copies"
+                class="copies-input"
+                title="Number of copies"
               />
               <button
                 v-if="modelLinks.length > 1"
@@ -40,7 +51,7 @@
               + Add Link
             </button>
           </div>
-          <small>Add one or more links to your 3D model files</small>
+          <small>Add one or more links to your 3D model files. Specify number of copies for each model.</small>
         </div>
         
         <div class="form-group">
@@ -57,11 +68,11 @@
                 :value="color.id"
                 v-model="selectedColors"
               />
-              <span class="color-name">{{ color.name }}</span>
               <span
                 class="color-preview"
                 :style="{ backgroundColor: color.hex }"
               ></span>
+              <span class="color-name">{{ color.name }}</span>
             </label>
           </div>
           <small v-if="selectedColors.length === 0" class="error-text">
@@ -99,14 +110,14 @@ import { useRouter } from 'vue-router'
 import { storage } from '../utils/storage'
 
 const router = useRouter()
-const modelLinks = ref([''])
+const modelLinks = ref([{ url: '', copies: 1 }])
 const selectedColors = ref([])
 const comment = ref('')
 const error = ref('')
 const success = ref('')
 
 const addLink = () => {
-  modelLinks.value.push('')
+  modelLinks.value.push({ url: '', copies: 1 })
 }
 
 const removeLink = (index) => {
@@ -158,8 +169,14 @@ const handleSubmit = async () => {
     return
   }
   
-  // Filter out empty links
-  const validLinks = modelLinks.value.filter(link => link.trim() !== '')
+  // Filter out empty links and validate copies
+  const validLinks = modelLinks.value
+    .filter(link => link.url && link.url.trim() !== '')
+    .map(link => ({
+      url: link.url.trim(),
+      copies: Math.max(1, parseInt(link.copies) || 1) // Ensure at least 1 copy
+    }))
+  
   if (validLinks.length === 0) {
     error.value = 'Please add at least one model link'
     return
@@ -177,8 +194,9 @@ const handleSubmit = async () => {
       id: Date.now().toString(),
       userId: user.id,
       userName: user.username,
-      modelLink: validLinks[0], // Backward compatibility
-      modelLinks: validLinks, // New: array of all links
+      modelLink: validLinks[0].url, // Backward compatibility
+      modelLinks: validLinks.map(l => l.url), // Array of URLs for backward compatibility
+      modelLinksWithCopies: validLinks, // New: array with copies
       colors: selectedColors.value.map(id => {
         const color = availableColors.value.find(c => c.id === id)
         return color ? color.name : id
@@ -290,6 +308,23 @@ onMounted(() => {
   flex: 1;
 }
 
+.copies-input {
+  width: 80px;
+  padding: 0.75rem;
+  border: 2px solid #3a3a3a;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: #1a1a1a;
+  color: #b8dce8;
+  font-family: inherit;
+  text-align: center;
+}
+
+.copies-input:focus {
+  outline: none;
+  border-color: #87CEEB;
+}
+
 .remove-link-btn {
   background: #e74c3c;
   color: white;
@@ -353,7 +388,7 @@ onMounted(() => {
 .color-option {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   padding: 0.75rem;
   border: 2px solid #3a3a3a;
   border-radius: 5px;

@@ -67,16 +67,23 @@
             <div class="detail-item">
               <strong>Model Links:</strong>
               <div class="links-list">
-                <a
-                  v-for="(link, index) in getOrderLinks(order)"
+                <div
+                  v-for="(linkData, index) in getOrderLinksWithCopies(order)"
                   :key="index"
-                  :href="link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="model-link"
+                  class="link-item"
                 >
-                  {{ link }}
-                </a>
+                  <a
+                    :href="linkData.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="model-link"
+                  >
+                    {{ linkData.url }}
+                  </a>
+                  <span class="copies-badge" v-if="linkData.copies > 1">
+                    ×{{ linkData.copies }} copies
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -195,6 +202,16 @@ const getOrderLinks = (order) => {
     return [order.modelLink]
   }
   return []
+}
+
+const getOrderLinksWithCopies = (order) => {
+  // Support new format with copies
+  if (order.modelLinksWithCopies && Array.isArray(order.modelLinksWithCopies) && order.modelLinksWithCopies.length > 0) {
+    return order.modelLinksWithCopies.filter(link => link && link.url && link.url.trim() !== '')
+  }
+  // Fallback to old format
+  const links = getOrderLinks(order)
+  return links.map(url => ({ url, copies: 1 }))
 }
 
 onMounted(() => {
@@ -438,6 +455,23 @@ onMounted(() => {
 
 .model-link:hover {
   background: rgba(135, 206, 235, 0.2);
+}
+
+.link-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.copies-badge {
+  background: rgba(135, 206, 235, 0.3);
+  color: #87CEEB;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(135, 206, 235, 0.5);
 }
 
 .detail-item p {

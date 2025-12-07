@@ -56,7 +56,8 @@ try {
                     'userId' => $order['user_id'],
                     'userName' => $order['user_name'],
                     'modelLink' => $modelLink, // Backward compatibility
-                    'modelLinks' => $links, // New: array of all links
+                    'modelLinks' => $links, // New: array of all links (for backward compatibility)
+                    'modelLinksWithCopies' => $linksWithCopies, // New: array with copies
                     'comment' => $order['comment'],
                     'status' => $order['status'],
                     'colors' => $colors,
@@ -169,10 +170,25 @@ try {
                     $data['status'] ?? 'Created'
                 ]);
                 
-                // Insert order links
-                $linkStmt = $pdo->prepare("INSERT INTO order_links (order_id, link_url, link_order) VALUES (?, ?, ?)");
-                foreach ($modelLinks as $index => $link) {
-                    $linkStmt->execute([$data['id'], $link, $index]);
+                // Insert order links with copies
+                // Support both old format (array of strings) and new format (array of objects with url and copies)
+                $linkStmt = $pdo->prepare("INSERT INTO order_links (order_id, link_url, copies, link_order) VALUES (?, ?, ?, ?)");
+                $linksWithCopies = [];
+                
+                if (isset($data['modelLinksWithCopies']) && is_array($data['modelLinksWithCopies'])) {
+                    // New format: array of objects with url and copies
+                    $linksWithCopies = $data['modelLinksWithCopies'];
+                } else {
+                    // Old format: array of strings, default to 1 copy each
+                    foreach ($modelLinks as $link) {
+                        $linksWithCopies[] = ['url' => $link, 'copies' => 1];
+                    }
+                }
+                
+                foreach ($linksWithCopies as $index => $linkData) {
+                    $url = is_array($linkData) ? $linkData['url'] : $linkData;
+                    $copies = is_array($linkData) && isset($linkData['copies']) ? max(1, intval($linkData['copies'])) : 1;
+                    $linkStmt->execute([$data['id'], $url, $copies, $index]);
                 }
                 
                 // Insert order colors
