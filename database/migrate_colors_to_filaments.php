@@ -72,27 +72,66 @@ try {
         // Migrate colors to materials
         echo "<div class='info'>Migrating colors to filaments...</div>";
         
-        $stmt = $pdo->prepare("INSERT INTO materials (id, user_id, name, color, material_type, shop_link, created_at, updated_at)
-                               SELECT 
-                                 CONCAT('filament_', c.id) as id,
-                                 c.user_id,
-                                 c.name,
-                                 c.value as color,
-                                 'PLA' as material_type,
-                                 c.filament_link as shop_link,
-                                 c.created_at,
-                                 c.updated_at
-                               FROM colors c
-                               WHERE NOT EXISTS (
-                                 SELECT 1 FROM materials m 
-                                 WHERE m.user_id = c.user_id 
-                                 AND m.name = c.name 
-                                 AND m.color = c.value
-                               )");
-        $stmt->execute();
-        $migrated = $stmt->rowCount();
+        // Get all colors with user info
+        $stmt = $pdo->query("SELECT c.id, c.user_id, c.name, c.value, c.filament_link, c.created_at, c.updated_at, u.username 
+                            FROM colors c 
+                            LEFT JOIN users u ON c.user_id = u.id 
+                            ORDER BY c.user_id, c.created_at");
+        $colors = $stmt->fetchAll();
+        
+        $migrated = 0;
+        $skipped = 0;
+        $userStats = [];
+        
+        $insertStmt = $pdo->prepare("INSERT INTO materials (id, user_id, name, color, material_type, shop_link, created_at, updated_at)
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                     ON DUPLICATE KEY UPDATE 
+                                       shop_link = COALESCE(VALUES(shop_link), materials.shop_link),
+                                       updated_at = CURRENT_TIMESTAMP");
+        
+        foreach ($colors as $color) {
+            $userId = $color['user_id'];
+            $username = $color['username'] ?? 'Unknown';
+            
+            // Initialize user stats if not exists
+            if (!isset($userStats[$userId])) {
+                $userStats[$userId] = ['username' => $username, 'migrated' => 0, 'skipped' => 0];
+            }
+            
+            // Check if material already exists for this user
+            $checkStmt = $pdo->prepare("SELECT id FROM materials WHERE user_id = ? AND name = ? AND color = ?");
+            $checkStmt->execute([$userId, $color['name'], $color['value']]);
+            
+            if ($checkStmt->rowCount() > 0) {
+                $skipped++;
+                $userStats[$userId]['skipped']++;
+                continue;
+            }
+            
+            // Create filament ID
+            $filamentId = 'filament_' . $color['id'];
+            
+            // Insert as material with default type PLA
+            $insertStmt->execute([
+                $filamentId,
+                $color['user_id'],
+                $color['name'],
+                $color['value'],
+                'PLA', // Default material type
+                $color['filament_link'] ?: null,
+                $color['created_at'],
+                $color['updated_at']
+            ]);
+            
+            $migrated++;
+            $userStats[$userId]['migrated']++;
+        }
         
         echo "<div class='success'>✓ Migrated $migrated colors to filaments</div>";
+        
+        if ($skipped > 0) {
+            echo "<div class='info'>Skipped $skipped duplicates (already exist as filaments)</div>";
+        }
         
         // Show summary
         $stmt = $pdo->query("SELECT COUNT(*) as count FROM materials");
@@ -101,7 +140,25 @@ try {
         echo "<div class='info'><strong>Migration Summary:</strong><br>";
         echo "Total colors in database: $colorCount<br>";
         echo "Total materials after migration: $totalMaterials<br>";
-        echo "Newly migrated: $migrated</div>";
+        echo "Newly migrated: $migrated<br>";
+        echo "Skipped (duplicates): $skipped</div>";
+        
+        // Show per-user statistics
+        if (!empty($userStats)) {
+            echo "<div class='info'><strong>Per-User Statistics:</strong></div>";
+            echo "<table>";
+            echo "<tr><th>User</th><th>Migrated</th><th>Skipped</th><th>Total</th></tr>";
+            foreach ($userStats as $userId => $stats) {
+                $total = $stats['migrated'] + $stats['skipped'];
+                echo "<tr>";
+                echo "<td>" . htmlspecialchars($stats['username']) . " (ID: $userId)</td>";
+                echo "<td>" . $stats['migrated'] . "</td>";
+                echo "<td>" . $stats['skipped'] . "</td>";
+                echo "<td>" . $total . "</td>";
+                echo "</tr>";
+            }
+            echo "</table>";
+        }
         
         // Show sample migrated filaments
         $stmt = $pdo->query("SELECT name, color, material_type, shop_link FROM materials ORDER BY created_at DESC LIMIT 10");
