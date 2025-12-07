@@ -59,19 +59,4 @@ jobs:
             *Run ID:* ${{ github.run_id }}
             
             View details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-      
-      - name: Send Telegram notification on success
-        if: success()
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            ✅ *Frontend Deployment Successful*
-            
-            *Repository:* Printing Studio App
-            *Branch:* ${{ github.ref_name }}
-            *Commit:* ${{ github.sha }}
-            
-            App deployed to: https://printing-studio-app-4e0e6.web.app
 
