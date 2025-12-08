@@ -171,6 +171,20 @@ export const storage = {
     }
   },
 
+  // Update printed status of an order link
+  async updateLinkPrintedStatus(linkId, printed) {
+    try {
+      const result = await apiCall('/orders.php', {
+        method: 'PATCH',
+        body: JSON.stringify({ linkId, printed })
+      })
+      return result
+    } catch (e) {
+      console.error('Error updating link printed status:', e)
+      throw e
+    }
+  },
+
   // Colors storage
   async getColors(userId = null) {
     try {
