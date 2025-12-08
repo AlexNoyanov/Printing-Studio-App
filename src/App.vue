@@ -5,7 +5,7 @@
         <div class="logo-section">
           <img :src="logoImage" alt="Logo" class="logo-image" />
         </div>
-        <h1 class="app-title">3D Printing App</h1>
+        <h1 class="app-title">{{ appTitle }}</h1>
         <div class="nav-links">
           <router-link to="/orders" v-if="userRole === 'user'">My Orders</router-link>
           <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
@@ -50,6 +50,15 @@ const currentUsername = computed(() => {
   } catch {
     return null
   }
+})
+
+const appTitle = computed(() => {
+  if (userRole.value === 'printer') {
+    return '3D Printing Studio'
+  } else if (userRole.value === 'user') {
+    return 'Order 3D Print'
+  }
+  return '3D Printing App'
 })
 
 const logout = () => {
