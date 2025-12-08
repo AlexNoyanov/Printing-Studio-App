@@ -131,21 +131,31 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storage } from '../utils/storage'
 
 const orders = ref([])
 const selectedUser = ref('')
 const selectedStatus = ref('')
+const isLoading = ref(false)
+let refreshInterval = null
 
 const statuses = ['Created', 'Reviewed', 'Printing', 'Printed', 'Delivery', 'Done']
 
 const loadOrders = async () => {
+  // Prevent concurrent requests
+  if (isLoading.value) {
+    return
+  }
+  
+  isLoading.value = true
   try {
     const allOrders = await storage.getOrders()
     orders.value = allOrders
   } catch (e) {
     console.error('Error loading orders:', e)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -236,8 +246,21 @@ const getOrderLinksWithCopies = (order) => {
 
 onMounted(() => {
   loadOrders()
-  // Refresh orders every 3 seconds
-  setInterval(loadOrders, 3000)
+  // Refresh orders every 30 seconds (reduced frequency for better performance)
+  // Only refresh if page is visible (not in background tab)
+  refreshInterval = setInterval(() => {
+    if (!document.hidden) {
+      loadOrders()
+    }
+  }, 30000) // 30 seconds instead of 3 seconds
+})
+
+onUnmounted(() => {
+  // Clean up interval when component is destroyed
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
 })
 </script>
 
