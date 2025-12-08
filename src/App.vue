@@ -11,7 +11,7 @@
           <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
           <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
           <router-link to="/filaments" v-if="userRole === 'printer'">Filaments</router-link>
-          <button @click="logout" class="logout-btn">Logout</button>
+          <button @click="logout" class="logout-btn">{{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}</button>
         </div>
       </div>
     </nav>
@@ -38,6 +38,17 @@ const userRole = computed(() => {
     return userData.role || 'user'
   } catch {
     return 'user'
+  }
+})
+
+const currentUsername = computed(() => {
+  const user = localStorage.getItem('currentUser')
+  if (!user) return null
+  try {
+    const userData = JSON.parse(user)
+    return userData.username || null
+  } catch {
+    return null
   }
 })
 
