@@ -20,7 +20,7 @@ $allowedOrigin = in_array($origin, $allowedOrigins) ? $origin : '*';
 // Set CORS headers - MUST be before any output
 if (!headers_sent()) {
     header('Access-Control-Allow-Origin: ' . $allowedOrigin);
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin');
     header('Access-Control-Allow-Credentials: false');
     header('Access-Control-Max-Age: 3600');
