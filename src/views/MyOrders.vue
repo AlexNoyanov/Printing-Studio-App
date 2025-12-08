@@ -29,14 +29,16 @@
             <div class="links-list">
               <div
                 v-for="(linkData, index) in getOrderLinksWithCopies(order)"
-                :key="index"
+                :key="linkData.id || index"
                 class="link-item"
               >
+                <span v-if="linkData.printed" class="printed-checkmark" title="Printed">✓</span>
                 <a
                   :href="linkData.url"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="model-link"
+                  :class="{ 'printed-link': linkData.printed }"
                 >
                   {{ linkData.url }}
                 </a>
@@ -366,6 +368,26 @@ onMounted(() => {
   font-size: 0.85rem;
   font-weight: 600;
   border: 1px solid rgba(135, 206, 235, 0.5);
+}
+
+.printed-checkmark {
+  color: #51cf66;
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(81, 207, 102, 0.2);
+  border-radius: 50%;
+  border: 2px solid #51cf66;
+  flex-shrink: 0;
+}
+
+.printed-link {
+  opacity: 0.7;
+  text-decoration: line-through;
 }
 
 .detail-item p {

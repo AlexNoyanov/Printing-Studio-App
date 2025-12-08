@@ -36,12 +36,21 @@ try {
                     order_id VARCHAR(50) NOT NULL,
                     link_url TEXT NOT NULL,
                     copies INT NOT NULL DEFAULT 1,
+                    printed BOOLEAN NOT NULL DEFAULT FALSE,
                     link_order INT NOT NULL DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     INDEX idx_order_id (order_id),
                     INDEX idx_link_order (link_order),
+                    INDEX idx_printed (printed),
                     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+            } else {
+                // Check if printed column exists, add if not
+                $stmt = $pdo->query("SHOW COLUMNS FROM order_links LIKE 'printed'");
+                if ($stmt->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE order_links ADD COLUMN printed BOOLEAN NOT NULL DEFAULT FALSE AFTER copies");
+                    $pdo->exec("CREATE INDEX idx_printed ON order_links(printed)");
+                }
             }
         } catch (PDOException $e) {
             // If table creation fails, log but don't throw (might already exist)
@@ -70,13 +79,18 @@ try {
                 $colorRows = $stmt->fetchAll();
                 $colors = array_column($colorRows, 'color_name');
                 
-                // Get order links with copies
-                $stmt = $pdo->prepare("SELECT link_url, copies FROM order_links WHERE order_id = ? ORDER BY link_order, id");
+                // Get order links with copies and printed status
+                $stmt = $pdo->prepare("SELECT id, link_url, copies, printed FROM order_links WHERE order_id = ? ORDER BY link_order, id");
                 $stmt->execute([$orderId]);
                 $linkRows = $stmt->fetchAll();
                 $links = array_column($linkRows, 'link_url');
                 $linksWithCopies = array_map(function($row) {
-                    return ['url' => $row['link_url'], 'copies' => intval($row['copies'] ?? 1)];
+                    return [
+                        'id' => $row['id'],
+                        'url' => $row['link_url'], 
+                        'copies' => intval($row['copies'] ?? 1),
+                        'printed' => (bool)($row['printed'] ?? false)
+                    ];
                 }, $linkRows);
                 
                 // For backward compatibility, include modelLink (first link or old model_link)
@@ -125,13 +139,13 @@ try {
                 $stmt->execute($params);
                 $orders = $stmt->fetchAll();
                 
-                // Get links for all orders with copies
+                // Get links for all orders with copies and printed status
                 $orderIds = array_column($orders, 'id');
                 $linksMap = [];
                 $linksWithCopiesMap = [];
                 if (!empty($orderIds)) {
                     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
-                    $linkStmt = $pdo->prepare("SELECT order_id, link_url, copies FROM order_links WHERE order_id IN ($placeholders) ORDER BY link_order, id");
+                    $linkStmt = $pdo->prepare("SELECT id, order_id, link_url, copies, printed FROM order_links WHERE order_id IN ($placeholders) ORDER BY link_order, id");
                     $linkStmt->execute($orderIds);
                     $linkRows = $linkStmt->fetchAll();
                     
@@ -143,8 +157,10 @@ try {
                         }
                         $linksMap[$orderId][] = $linkRow['link_url'];
                         $linksWithCopiesMap[$orderId][] = [
+                            'id' => $linkRow['id'],
                             'url' => $linkRow['link_url'],
-                            'copies' => intval($linkRow['copies'] ?? 1)
+                            'copies' => intval($linkRow['copies'] ?? 1),
+                            'printed' => (bool)($linkRow['printed'] ?? false)
                         ];
                     }
                 }
@@ -212,7 +228,7 @@ try {
                 
                 // Insert order links with copies
                 // Support both old format (array of strings) and new format (array of objects with url and copies)
-                $linkStmt = $pdo->prepare("INSERT INTO order_links (order_id, link_url, copies, link_order) VALUES (?, ?, ?, ?)");
+                $linkStmt = $pdo->prepare("INSERT INTO order_links (order_id, link_url, copies, printed, link_order) VALUES (?, ?, ?, ?, ?)");
                 $linksWithCopies = [];
                 
                 if (isset($data['modelLinksWithCopies']) && is_array($data['modelLinksWithCopies'])) {
@@ -228,7 +244,8 @@ try {
                 foreach ($linksWithCopies as $index => $linkData) {
                     $url = is_array($linkData) ? $linkData['url'] : $linkData;
                     $copies = is_array($linkData) && isset($linkData['copies']) ? max(1, intval($linkData['copies'])) : 1;
-                    $linkStmt->execute([$data['id'], $url, $copies, $index]);
+                    $printed = false; // New links are not printed by default
+                    $linkStmt->execute([$data['id'], $url, $copies, $printed, $index]);
                 }
                 
                 // Insert order colors
@@ -354,6 +371,27 @@ try {
                 $pdo->rollBack();
                 throw $e;
             }
+            break;
+
+        case 'PATCH':
+            // Update printed status of a specific order link
+            $data = getRequestBody();
+            
+            if (!isset($data['linkId']) || !isset($data['printed'])) {
+                sendJSON(['error' => 'Link ID and printed status required'], 400);
+            }
+            
+            $linkId = intval($data['linkId']);
+            $printed = (bool)$data['printed'];
+            
+            $stmt = $pdo->prepare("UPDATE order_links SET printed = ? WHERE id = ?");
+            $stmt->execute([$printed, $linkId]);
+            
+            if ($stmt->rowCount() === 0) {
+                sendJSON(['error' => 'Order link not found'], 404);
+            }
+            
+            sendJSON(['success' => true, 'printed' => $printed]);
             break;
 
         case 'DELETE':

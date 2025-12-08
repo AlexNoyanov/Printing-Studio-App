@@ -69,9 +69,18 @@
               <div class="links-list">
                 <div
                   v-for="(linkData, index) in getOrderLinksWithCopies(order)"
-                  :key="index"
+                  :key="linkData.id || index"
                   class="link-item"
                 >
+                  <label class="printed-checkbox">
+                    <input
+                      type="checkbox"
+                      :checked="linkData.printed || false"
+                      @change="togglePrinted(order.id, linkData.id || index, $event.target.checked)"
+                      class="printed-checkbox-input"
+                    />
+                    <span class="checkbox-label">Printed</span>
+                  </label>
                   <a
                     :href="linkData.url"
                     target="_blank"
@@ -179,6 +188,17 @@ const updateStatus = async (orderId, newStatus) => {
   } catch (e) {
     console.error('Error updating order status:', e)
     alert('Failed to update order status. Please try again.')
+  }
+}
+
+const togglePrinted = async (orderId, linkId, printed) => {
+  try {
+    await storage.updateLinkPrintedStatus(linkId, printed)
+    // Reload orders to get updated status
+    await loadOrders()
+  } catch (e) {
+    console.error('Error updating printed status:', e)
+    alert('Failed to update printed status. Please try again.')
   }
 }
 
@@ -472,6 +492,27 @@ onMounted(() => {
   font-size: 0.85rem;
   font-weight: 600;
   border: 1px solid rgba(135, 206, 235, 0.5);
+}
+
+.printed-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.printed-checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #87CEEB;
+}
+
+.checkbox-label {
+  color: #a0d4e8;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .detail-item p {
