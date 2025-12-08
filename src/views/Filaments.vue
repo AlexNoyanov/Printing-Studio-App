@@ -55,6 +55,31 @@
             </div>
           </div>
         </div>
+        
+        <!-- Material Info and Shop Link next to spool -->
+        <div class="spool-info">
+          <div class="spool-info-item">
+            <strong>Material:</strong>
+            <span class="material-type-badge">{{ filament.materialType || 'PLA' }}</span>
+          </div>
+          <div v-if="filament.filamentLink || filament.shopLink" class="spool-info-item">
+            <strong>Shop Link:</strong>
+            <a
+              :href="filament.filamentLink || filament.shopLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="shop-link-btn"
+            >
+              <span class="shop-icon">🛒</span>
+              <span>Visit Shop</span>
+              <span class="external-icon">↗</span>
+            </a>
+          </div>
+          <div v-else class="spool-info-item">
+            <strong>Shop Link:</strong>
+            <span class="no-link">No shop link provided</span>
+          </div>
+        </div>
       </div>
 
       <!-- Filament Info -->
@@ -70,31 +95,6 @@
               ></div>
               <span>{{ filament.value.toUpperCase() }}</span>
             </div>
-          </div>
-          <div v-if="filament.filamentLink" class="info-item shop-link-item">
-            <strong>Shop Link:</strong>
-            <a
-              :href="filament.filamentLink"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="shop-link-btn"
-            >
-              <span class="shop-icon">🛒</span>
-              <span>Visit Shop</span>
-              <span class="external-icon">↗</span>
-            </a>
-            <a
-              :href="filament.filamentLink"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="shop-link-text"
-            >
-              {{ filament.filamentLink }}
-            </a>
-          </div>
-          <div v-else class="info-item">
-            <strong>Shop Link:</strong>
-            <span class="no-link">No shop link provided</span>
           </div>
         </div>
       </div>
@@ -254,8 +254,9 @@ onMounted(() => {
 /* Spool Design */
 .spool-container {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
   padding: 2rem;
   background: #2a2a2a;
   border-radius: 10px;
@@ -264,9 +265,31 @@ onMounted(() => {
 
 .spool-wrapper {
   position: relative;
-  width: 100%;
+  flex: 1;
   display: flex;
   align-items: flex-start;
+}
+
+.spool-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 250px;
+  padding-left: 2rem;
+  border-left: 1px solid #3a3a3a;
+}
+
+.spool-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.spool-info-item strong {
+  color: #87CEEB;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .spool {
@@ -527,7 +550,6 @@ onMounted(() => {
   border-radius: 5px;
   font-weight: 600;
   transition: all 0.3s;
-  margin-bottom: 0.5rem;
   box-shadow: 0 0 10px rgba(135, 206, 235, 0.3);
 }
 
