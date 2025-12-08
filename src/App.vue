@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import logoImage from './logos/Logo-black.png'
 
@@ -60,6 +60,15 @@ const appTitle = computed(() => {
   }
   return '3D Printing App'
 })
+
+// Update document title based on user role
+watch([appTitle, isAuthenticated], ([title, authenticated]) => {
+  if (authenticated) {
+    document.title = title
+  } else {
+    document.title = '3D Printing Studio'
+  }
+}, { immediate: true })
 
 const logout = () => {
   localStorage.removeItem('currentUser')
