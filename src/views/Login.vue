@@ -4,13 +4,13 @@
       <h1>Login</h1>
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
-          <label for="email">Email</label>
+          <label for="email">Username or Email</label>
           <input
             id="email"
             v-model="email"
-            type="email"
+            type="text"
             required
-            placeholder="Enter your email"
+            placeholder="Enter your username or email"
           />
         </div>
         <div class="form-group">
@@ -47,7 +47,13 @@ const handleLogin = async () => {
   error.value = ''
   try {
     const users = await storage.getUsers()
-    const user = users.find(u => u.email === email.value && u.password === password.value)
+    const loginInput = email.value.trim()
+    
+    // Try to find user by email or username
+    const user = users.find(u => 
+      (u.email === loginInput || u.username === loginInput) && 
+      u.password === password.value
+    )
     
     if (user) {
       localStorage.setItem('currentUser', JSON.stringify({
@@ -63,7 +69,7 @@ const handleLogin = async () => {
         router.push('/orders')
       }
     } else {
-      error.value = 'Invalid email or password'
+      error.value = 'Invalid username/email or password'
     }
   } catch (e) {
     error.value = 'Failed to connect to server. Please try again.'
