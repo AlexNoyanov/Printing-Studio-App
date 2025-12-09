@@ -3,11 +3,12 @@
 // For Firebase deployment, use absolute URL to noyanov.com
 // For server deployment, use relative path
 const API_BASE = import.meta.env.VITE_API_BASE || (() => {
-  if (import.meta.env.DEV) {
-    return 'http://localhost:3001/Apps/Printing/api'
-  }
-  // Check if we're on Firebase (web.app domain) or server
+  // Always use production backend at noyanov.com
   if (window.location.hostname.includes('web.app') || window.location.hostname.includes('firebaseapp.com')) {
+    return 'https://noyanov.com/Apps/Printing/api'
+  }
+  // For local development, also use production backend
+  if (import.meta.env.DEV) {
     return 'https://noyanov.com/Apps/Printing/api'
   }
   return '/Apps/Printing/api'
