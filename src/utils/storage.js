@@ -390,6 +390,41 @@ export const storage = {
       console.error('Error migrating colors to filaments:', e)
       throw e
     }
+  },
+
+  // Material Types management
+  async getMaterialTypes() {
+    try {
+      return await apiCall('/material_types.php')
+    } catch (e) {
+      console.error('Error reading material types:', e)
+      return []
+    }
+  },
+
+  async createMaterialType(name) {
+    try {
+      const result = await apiCall('/material_types.php', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      })
+      return result
+    } catch (e) {
+      console.error('Error creating material type:', e)
+      throw e
+    }
+  },
+
+  async deleteMaterialType(typeId) {
+    try {
+      const result = await apiCall(`/material_types.php?id=${typeId}`, {
+        method: 'DELETE'
+      })
+      return result
+    } catch (e) {
+      console.error('Error deleting material type:', e)
+      throw e
+    }
   }
 }
 

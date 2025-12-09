@@ -7,8 +7,25 @@
     <div class="filaments-content">
       <!-- Add/Edit Filament Form -->
       <div class="filament-form-card">
-        <h2>{{ editingFilament ? 'Edit Filament' : 'Add New Filament' }}</h2>
-        <form @submit.prevent="handleSubmit" class="filament-form">
+        <div class="form-tabs">
+          <button
+            type="button"
+            :class="['tab-btn', { active: activeTab === 'filament' }]"
+            @click="activeTab = 'filament'"
+          >
+            {{ editingFilament ? 'Edit Filament' : 'Add New Filament' }}
+          </button>
+          <button
+            type="button"
+            :class="['tab-btn', { active: activeTab === 'materials' }]"
+            @click="activeTab = 'materials'"
+          >
+            Manage Material Types
+          </button>
+        </div>
+
+        <!-- Filament Form Tab -->
+        <form v-if="activeTab === 'filament'" @submit.prevent="handleSubmit" class="filament-form">
           <div class="form-group">
             <label for="filamentName">Filament Name *</label>
             <input
@@ -52,16 +69,13 @@
               class="material-select"
             >
               <option value="">Select material type</option>
-              <option value="PLA">PLA</option>
-              <option value="PETG">PETG</option>
-              <option value="ABS">ABS</option>
-              <option value="TPU">TPU</option>
-              <option value="ASA">ASA</option>
-              <option value="PC">PC (Polycarbonate)</option>
-              <option value="Nylon">Nylon</option>
-              <option value="Wood">Wood</option>
-              <option value="Metal">Metal</option>
-              <option value="Other">Other</option>
+              <option
+                v-for="type in materialTypes"
+                :key="type.id"
+                :value="type.name"
+              >
+                {{ type.name }}
+              </option>
             </select>
           </div>
 
@@ -104,6 +118,66 @@
             </button>
           </div>
         </form>
+
+        <!-- Material Types Management Tab -->
+        <div v-if="activeTab === 'materials'" class="material-types-management">
+          <h3>Manage Material Types</h3>
+          
+          <!-- Add New Material Type -->
+          <div class="add-material-type-form">
+            <div class="form-group">
+              <label for="newMaterialType">Add New Material Type</label>
+              <div class="add-type-input-group">
+                <input
+                  id="newMaterialType"
+                  v-model="newMaterialType"
+                  type="text"
+                  placeholder="e.g., PLA+, Carbon Fiber"
+                  maxlength="50"
+                  class="material-type-input"
+                  @keyup.enter="addMaterialType"
+                />
+                <button
+                  type="button"
+                  @click="addMaterialType"
+                  class="add-type-btn"
+                  :disabled="!newMaterialType.trim() || addingMaterialType"
+                >
+                  {{ addingMaterialType ? 'Adding...' : 'Add' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Material Types List -->
+          <div class="material-types-list">
+            <h4>Available Material Types ({{ materialTypes.length }})</h4>
+            <div v-if="materialTypes.length === 0" class="empty-materials">
+              <p>No material types yet. Add your first one above!</p>
+            </div>
+            <div v-else class="materials-grid">
+              <div
+                v-for="type in materialTypes"
+                :key="type.id"
+                class="material-type-item"
+              >
+                <span class="material-type-name">{{ type.name }}</span>
+                <button
+                  type="button"
+                  @click="deleteMaterialType(type.id)"
+                  class="delete-type-btn"
+                  :disabled="deletingMaterialType === type.id"
+                  title="Delete material type"
+                >
+                  {{ deletingMaterialType === type.id ? '...' : '🗑️' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="materialTypeError" class="error-message">{{ materialTypeError }}</div>
+          <div v-if="materialTypeSuccess" class="success-message">{{ materialTypeSuccess }}</div>
+        </div>
       </div>
 
       <!-- Filaments List -->
@@ -189,6 +263,13 @@ const migrating = ref(false)
 const migrationMessage = ref('')
 const migrationMessageClass = ref('')
 const hasColors = ref(false)
+const activeTab = ref('filament')
+const materialTypes = ref([])
+const newMaterialType = ref('')
+const addingMaterialType = ref(false)
+const deletingMaterialType = ref(null)
+const materialTypeError = ref('')
+const materialTypeSuccess = ref('')
 
 const getCurrentUser = () => {
   const userStr = localStorage.getItem('currentUser')
@@ -385,8 +466,86 @@ const deleteFilament = async (filamentId) => {
   }
 }
 
+const loadMaterialTypes = async () => {
+  try {
+    materialTypes.value = await storage.getMaterialTypes()
+  } catch (e) {
+    console.error('Error loading material types:', e)
+    materialTypeError.value = 'Failed to load material types. Please try again.'
+  }
+}
+
+const addMaterialType = async () => {
+  const name = newMaterialType.value.trim()
+  if (!name) return
+
+  addingMaterialType.value = true
+  materialTypeError.value = ''
+  materialTypeSuccess.value = ''
+
+  try {
+    await storage.createMaterialType(name)
+    materialTypeSuccess.value = `Material type "${name}" added successfully!`
+    newMaterialType.value = ''
+    await loadMaterialTypes()
+    
+    setTimeout(() => {
+      materialTypeSuccess.value = ''
+    }, 3000)
+  } catch (e) {
+    console.error('Error adding material type:', e)
+    const errorMsg = e.message || 'Failed to add material type'
+    if (errorMsg.includes('already exists')) {
+      materialTypeError.value = `Material type "${name}" already exists!`
+    } else {
+      materialTypeError.value = errorMsg
+    }
+  } finally {
+    addingMaterialType.value = false
+  }
+}
+
+const deleteMaterialType = async (typeId) => {
+  const type = materialTypes.value.find(t => t.id === typeId)
+  if (!type) return
+
+  if (!confirm(`Are you sure you want to delete "${type.name}"? This cannot be undone if any filaments are using this type.`)) {
+    return
+  }
+
+  deletingMaterialType.value = typeId
+  materialTypeError.value = ''
+  materialTypeSuccess.value = ''
+
+  try {
+    await storage.deleteMaterialType(typeId)
+    materialTypeSuccess.value = `Material type "${type.name}" deleted successfully!`
+    await loadMaterialTypes()
+    
+    // If the deleted type was selected in the form, clear it
+    if (filamentForm.value.materialType === type.name) {
+      filamentForm.value.materialType = ''
+    }
+    
+    setTimeout(() => {
+      materialTypeSuccess.value = ''
+    }, 3000)
+  } catch (e) {
+    console.error('Error deleting material type:', e)
+    const errorMsg = e.message || 'Failed to delete material type'
+    if (errorMsg.includes('using it')) {
+      materialTypeError.value = `Cannot delete "${type.name}": ${errorMsg}`
+    } else {
+      materialTypeError.value = errorMsg
+    }
+  } finally {
+    deletingMaterialType.value = null
+  }
+}
+
 onMounted(() => {
   loadFilaments()
+  loadMaterialTypes()
 })
 </script>
 
@@ -438,6 +597,160 @@ onMounted(() => {
   color: #a0d4e8;
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
+}
+
+.form-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #3a3a3a;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.3s;
+}
+
+.tab-btn:hover {
+  color: #a0d4e8;
+}
+
+.tab-btn.active {
+  color: #87CEEB;
+  border-bottom-color: #87CEEB;
+}
+
+.material-types-management {
+  padding-top: 1rem;
+}
+
+.material-types-management h3 {
+  color: #a0d4e8;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.material-types-management h4 {
+  color: #87CEEB;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.add-material-type-form {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.add-type-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.material-type-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #3a3a3a;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: #1a1a1a;
+  color: #b8dce8;
+  font-family: inherit;
+}
+
+.material-type-input:focus {
+  outline: none;
+  border-color: #87CEEB;
+}
+
+.add-type-btn {
+  background: #87CEEB;
+  color: #000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+  white-space: nowrap;
+}
+
+.add-type-btn:hover:not(:disabled) {
+  background: #6bb6d6;
+}
+
+.add-type-btn:disabled {
+  background: #3a3a3a;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.material-types-list {
+  margin-top: 1.5rem;
+}
+
+.empty-materials {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.material-type-item {
+  background: #1a1a1a;
+  border: 2px solid #3a3a3a;
+  border-radius: 5px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s;
+}
+
+.material-type-item:hover {
+  border-color: #87CEEB;
+}
+
+.material-type-name {
+  color: #b8dce8;
+  font-weight: 600;
+  flex: 1;
+}
+
+.delete-type-btn {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  padding: 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+  min-width: 2.5rem;
+}
+
+.delete-type-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: #ff6b6b;
+}
+
+.delete-type-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .list-header {
