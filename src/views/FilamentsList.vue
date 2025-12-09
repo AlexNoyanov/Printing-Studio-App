@@ -5,8 +5,89 @@
     </div>
 
     <div class="filaments-content">
-      <!-- Add/Edit Filament Form -->
-      <div class="filament-form-card">
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <button
+          @click="activeTab = 'list'"
+          :class="['tab-button', { active: activeTab === 'list' }]"
+        >
+          Filaments List
+        </button>
+        <button
+          @click="activeTab = 'manage'"
+          :class="['tab-button', { active: activeTab === 'manage' }]"
+        >
+          Manage Materials
+        </button>
+      </div>
+
+      <!-- Tab Content: Filaments List -->
+      <div v-show="activeTab === 'list'" class="tab-content">
+        <!-- Filaments List -->
+        <div class="filaments-list-card">
+          <div class="list-header">
+            <h2>Your Filaments ({{ filaments.length }})</h2>
+          </div>
+          <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message" style="white-space: pre-line;">
+            {{ migrationMessage }}
+          </div>
+          <div v-if="filaments.length === 0" class="empty-filaments">
+            <p>No filaments added yet. Add your first filament above!</p>
+            <p v-if="hasColors" class="migration-hint">
+              You have existing colors. Click "Migrate Colors to Filaments" to convert them.
+            </p>
+          </div>
+          <div v-else class="filaments-grid">
+            <router-link
+              v-for="filament in filaments"
+              :key="filament.id"
+              :to="`/filaments/${filament.id}`"
+              class="filament-item"
+            >
+              <div
+                class="filament-swatch"
+                :style="{ backgroundColor: filament.color || '#000000' }"
+              ></div>
+              <div class="filament-info">
+                <h3>{{ filament.name }}</h3>
+                <p class="filament-type">{{ filament.materialType }}</p>
+                <p class="filament-color">{{ filament.color ? filament.color.toUpperCase() : 'N/A' }}</p>
+                <a
+                  v-if="filament.shopLink"
+                  :href="filament.shopLink"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="shop-link"
+                  @click.stop
+                >
+                  Shop Link →
+                </a>
+              </div>
+              <div class="filament-actions" @click.stop>
+                <button
+                  @click.prevent="editFilament(filament)"
+                  class="edit-btn"
+                  title="Edit filament"
+                >
+                  ✏️
+                </button>
+                <button
+                  @click.prevent="deleteFilament(filament.id)"
+                  class="delete-btn"
+                  title="Delete filament"
+                >
+                  🗑️
+                </button>
+              </div>
+            </router-link>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Manage Materials -->
+      <div v-show="activeTab === 'manage'" class="tab-content">
+        <!-- Add/Edit Filament Form -->
+        <div class="filament-form-card">
         <h2>{{ editingFilament ? 'Edit Filament' : 'Add New Filament' }}</h2>
         <form @submit.prevent="handleSubmit" class="filament-form">
           <div class="form-group">
@@ -104,65 +185,48 @@
             </button>
           </div>
         </form>
-      </div>
 
-      <!-- Filaments List -->
-      <div class="filaments-list-card">
-        <div class="list-header">
-          <h2>Your Filaments ({{ filaments.length }})</h2>
-        </div>
-        <div v-if="migrationMessage" :class="migrationMessageClass" class="migration-message" style="white-space: pre-line;">
-          {{ migrationMessage }}
-        </div>
-        <div v-if="filaments.length === 0" class="empty-filaments">
-          <p>No filaments added yet. Add your first filament above!</p>
-          <p v-if="hasColors" class="migration-hint">
-            You have existing colors. Click "Migrate Colors to Filaments" to convert them.
-          </p>
-        </div>
-        <div v-else class="filaments-grid">
-          <router-link
-            v-for="filament in filaments"
-            :key="filament.id"
-            :to="`/filaments/${filament.id}`"
-            class="filament-item"
-          >
+        <!-- Materials List for Management -->
+        <div class="materials-management-card">
+          <h2>Existing Materials ({{ filaments.length }})</h2>
+          <div v-if="filaments.length === 0" class="empty-materials">
+            <p>No materials yet. Add your first material above!</p>
+          </div>
+          <div v-else class="materials-management-list">
             <div
-              class="filament-swatch"
-              :style="{ backgroundColor: filament.color || '#000000' }"
-            ></div>
-            <div class="filament-info">
-              <h3>{{ filament.name }}</h3>
-              <p class="filament-type">{{ filament.materialType }}</p>
-              <p class="filament-color">{{ filament.color ? filament.color.toUpperCase() : 'N/A' }}</p>
-              <a
-                v-if="filament.shopLink"
-                :href="filament.shopLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="shop-link"
-                @click.stop
-              >
-                Shop Link →
-              </a>
+              v-for="filament in filaments"
+              :key="filament.id"
+              class="material-management-item"
+            >
+              <div class="material-info">
+                <div
+                  class="material-swatch"
+                  :style="{ backgroundColor: filament.color || '#000000' }"
+                ></div>
+                <div class="material-details">
+                  <h3>{{ filament.name }}</h3>
+                  <p class="material-type">{{ filament.materialType }}</p>
+                  <p class="material-color">{{ filament.color ? filament.color.toUpperCase() : 'N/A' }}</p>
+                </div>
+              </div>
+              <div class="material-actions">
+                <button
+                  @click="editFilament(filament)"
+                  class="edit-btn"
+                  title="Edit material"
+                >
+                  ✏️ Edit
+                </button>
+                <button
+                  @click="deleteFilament(filament.id)"
+                  class="delete-btn"
+                  title="Delete material"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
             </div>
-            <div class="filament-actions" @click.stop>
-              <button
-                @click.prevent="editFilament(filament)"
-                class="edit-btn"
-                title="Edit filament"
-              >
-                ✏️
-              </button>
-              <button
-                @click.prevent="deleteFilament(filament.id)"
-                class="delete-btn"
-                title="Delete filament"
-              >
-                🗑️
-              </button>
-            </div>
-          </router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -189,6 +253,7 @@ const migrating = ref(false)
 const migrationMessage = ref('')
 const migrationMessageClass = ref('')
 const hasColors = ref(false)
+const activeTab = ref('list')
 
 const getCurrentUser = () => {
   const userStr = localStorage.getItem('currentUser')
@@ -425,12 +490,107 @@ onMounted(() => {
 }
 
 .filament-form-card,
-.filaments-list-card {
+.filaments-list-card,
+.materials-management-card {
   background: #2a2a2a;
   border-radius: 10px;
   padding: 2rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid #3a3a3a;
+}
+
+.materials-management-card {
+  margin-top: 2rem;
+}
+
+.materials-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.material-management-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  transition: all 0.3s;
+}
+
+.material-management-item:hover {
+  border-color: #87CEEB;
+  box-shadow: 0 2px 10px rgba(135, 206, 235, 0.2);
+}
+
+.material-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.material-swatch {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  border: 2px solid #3a3a3a;
+  flex-shrink: 0;
+}
+
+.material-details h3 {
+  color: #87CEEB;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.material-details p {
+  margin: 0.25rem 0;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.material-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.material-actions .edit-btn,
+.material-actions .delete-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.material-actions .edit-btn {
+  background: #87CEEB;
+  color: #000;
+}
+
+.material-actions .edit-btn:hover {
+  background: #6bb6d6;
+}
+
+.material-actions .delete-btn {
+  background: #ff6b6b;
+  color: #fff;
+}
+
+.material-actions .delete-btn:hover {
+  background: #ff5252;
+}
+
+.empty-materials {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
 }
 
 .filament-form-card h2,
