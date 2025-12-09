@@ -185,6 +185,7 @@
             </button>
           </div>
         </form>
+        </div>
 
         <!-- Materials List for Management -->
         <div class="materials-management-card">
