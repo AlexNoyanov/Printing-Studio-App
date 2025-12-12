@@ -9,6 +9,7 @@
         <div class="nav-links">
           <router-link to="/orders" v-if="userRole === 'user'">My Orders</router-link>
           <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
+          <router-link to="/your-filaments" v-if="userRole === 'user' && hasUserFilaments">Your Filaments</router-link>
           <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
           <router-link to="/filaments" v-if="userRole === 'printer'">Filaments</router-link>
           <button @click="logout" class="logout-btn">{{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}</button>
@@ -20,11 +21,13 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { storage } from './utils/storage'
 import logoImage from './logos/Logo-black.png'
 
 const router = useRouter()
+const hasUserFilaments = ref(false)
 
 const isAuthenticated = computed(() => {
   return localStorage.getItem('currentUser') !== null
@@ -61,14 +64,51 @@ const appTitle = computed(() => {
   return '3D Printing App'
 })
 
+// Check if user has filaments (only for clients)
+const checkUserFilaments = async () => {
+  if (userRole.value !== 'user') {
+    hasUserFilaments.value = false
+    return
+  }
+
+  try {
+    const userStr = localStorage.getItem('currentUser')
+    if (!userStr) {
+      hasUserFilaments.value = false
+      return
+    }
+    const userData = JSON.parse(userStr)
+    const filaments = await storage.getUserFilaments(userData.id)
+    hasUserFilaments.value = filaments.length > 0
+  } catch (e) {
+    console.error('Error checking user filaments:', e)
+    hasUserFilaments.value = false
+  }
+}
+
 // Update document title based on user role
 watch([appTitle, isAuthenticated], ([title, authenticated]) => {
   if (authenticated) {
     document.title = title
+    checkUserFilaments()
   } else {
     document.title = '3D Printing Studio'
+    hasUserFilaments.value = false
   }
 }, { immediate: true })
+
+// Also check when route changes (in case filaments were just assigned)
+watch(() => router.currentRoute.value.path, () => {
+  if (isAuthenticated.value && userRole.value === 'user') {
+    checkUserFilaments()
+  }
+})
+
+onMounted(() => {
+  if (isAuthenticated.value && userRole.value === 'user') {
+    checkUserFilaments()
+  }
+})
 
 const logout = () => {
   localStorage.removeItem('currentUser')

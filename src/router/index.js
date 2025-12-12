@@ -6,6 +6,7 @@ import MyOrders from '../views/MyOrders.vue'
 import Dashboard from '../views/Dashboard.vue'
 import FilamentsList from '../views/FilamentsList.vue'
 import Filaments from '../views/Filaments.vue'
+import YourFilaments from '../views/YourFilaments.vue'
 
 const routes = [
   {
@@ -32,6 +33,12 @@ const routes = [
     path: '/orders',
     name: 'MyOrders',
     component: MyOrders,
+    meta: { requiresAuth: true, requiresRole: 'user' }
+  },
+  {
+    path: '/your-filaments',
+    name: 'YourFilaments',
+    component: YourFilaments,
     meta: { requiresAuth: true, requiresRole: 'user' }
   },
   {

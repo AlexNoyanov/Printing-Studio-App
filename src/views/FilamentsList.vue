@@ -180,6 +180,73 @@
         </div>
       </div>
 
+      <!-- Assign Filament to Client -->
+      <div class="assign-filament-card">
+        <h2>Assign Filament to Client</h2>
+        <form @submit.prevent="assignFilamentToClient" class="assign-form">
+          <div class="form-group">
+            <label for="clientSelect">Select Client *</label>
+            <select
+              id="clientSelect"
+              v-model="assignForm.clientId"
+              required
+              class="client-select"
+            >
+              <option value="">Choose a client...</option>
+              <option
+                v-for="client in clients"
+                :key="client.id"
+                :value="client.id"
+              >
+                {{ client.username }} ({{ client.email }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="filamentSelect">Select Filament *</label>
+            <select
+              id="filamentSelect"
+              v-model="assignForm.materialId"
+              required
+              class="filament-select"
+            >
+              <option value="">Choose a filament...</option>
+              <option
+                v-for="filament in filaments"
+                :key="filament.id"
+                :value="filament.id"
+              >
+                {{ filament.name }} ({{ filament.materialType }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="quantity">Quantity (Spools) *</label>
+            <input
+              id="quantity"
+              v-model.number="assignForm.quantity"
+              type="number"
+              min="1"
+              required
+              class="quantity-input"
+              placeholder="1"
+            />
+            <small>Number of spools to assign to this client</small>
+          </div>
+
+          <div v-if="assignError" class="error-message">{{ assignError }}</div>
+          <div v-if="assignSuccess" class="success-message">{{ assignSuccess }}</div>
+
+          <div class="form-actions">
+            <button type="submit" class="submit-btn" :disabled="assigning">
+              {{ assigning ? 'Assigning...' : 'Assign Filament' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- Filaments List -->
       <div class="filaments-list-card">
         <div class="list-header">
@@ -270,6 +337,15 @@ const addingMaterialType = ref(false)
 const deletingMaterialType = ref(null)
 const materialTypeError = ref('')
 const materialTypeSuccess = ref('')
+const clients = ref([])
+const assignForm = ref({
+  clientId: '',
+  materialId: '',
+  quantity: 1
+})
+const assigning = ref(false)
+const assignError = ref('')
+const assignSuccess = ref('')
 
 const getCurrentUser = () => {
   const userStr = localStorage.getItem('currentUser')
@@ -543,9 +619,57 @@ const deleteMaterialType = async (typeId) => {
   }
 }
 
+const loadClients = async () => {
+  try {
+    const allUsers = await storage.getUsers()
+    // Filter to only show clients (role = 'user')
+    clients.value = allUsers.filter(u => u.role === 'user')
+  } catch (e) {
+    console.error('Error loading clients:', e)
+  }
+}
+
+const assignFilamentToClient = async () => {
+  assignError.value = ''
+  assignSuccess.value = ''
+
+  if (!assignForm.value.clientId || !assignForm.value.materialId || !assignForm.value.quantity) {
+    assignError.value = 'Please fill in all fields'
+    return
+  }
+
+  assigning.value = true
+
+  try {
+    await storage.assignFilamentToUser(
+      assignForm.value.clientId,
+      assignForm.value.materialId,
+      assignForm.value.quantity
+    )
+    assignSuccess.value = `Filament assigned successfully!`
+    
+    // Reset form
+    assignForm.value = {
+      clientId: '',
+      materialId: '',
+      quantity: 1
+    }
+    
+    setTimeout(() => {
+      assignSuccess.value = ''
+    }, 3000)
+  } catch (e) {
+    console.error('Error assigning filament:', e)
+    assignError.value = e.message || 'Failed to assign filament. Please try again.'
+  } finally {
+    assigning.value = false
+  }
+}
+
 onMounted(() => {
   loadFilaments()
   loadMaterialTypes()
+  loadClients()
 })
 </script>
 
@@ -584,12 +708,48 @@ onMounted(() => {
 }
 
 .filament-form-card,
-.filaments-list-card {
+.filaments-list-card,
+.assign-filament-card {
   background: #2a2a2a;
   border-radius: 10px;
   padding: 2rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   border: 1px solid #3a3a3a;
+}
+
+.assign-filament-card {
+  margin-top: 2rem;
+}
+
+.assign-filament-card h2 {
+  color: #a0d4e8;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.assign-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.client-select,
+.filament-select,
+.quantity-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #3a3a3a;
+  border-radius: 5px;
+  font-size: 1rem;
+  background: #1a1a1a;
+  color: #b8dce8;
+  font-family: inherit;
+}
+
+.client-select:focus,
+.filament-select:focus,
+.quantity-input:focus {
+  outline: none;
+  border-color: #87CEEB;
 }
 
 .filament-form-card h2,

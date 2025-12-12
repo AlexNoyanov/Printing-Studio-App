@@ -425,6 +425,58 @@ export const storage = {
       console.error('Error deleting material type:', e)
       throw e
     }
+  },
+
+  // User Filaments (client-owned filament spools)
+  async getUserFilaments(userId) {
+    try {
+      return await apiCall(`/user_filaments.php?userId=${userId}`)
+    } catch (e) {
+      console.error('Error reading user filaments:', e)
+      return []
+    }
+  },
+
+  async assignFilamentToUser(userId, materialId, quantity = 1) {
+    try {
+      const result = await apiCall('/user_filaments.php', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          materialId,
+          quantity
+        })
+      })
+      return result
+    } catch (e) {
+      console.error('Error assigning filament to user:', e)
+      throw e
+    }
+  },
+
+  async updateUserFilamentQuantity(userFilamentId, quantity) {
+    try {
+      const result = await apiCall(`/user_filaments.php?id=${userFilamentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ quantity })
+      })
+      return result
+    } catch (e) {
+      console.error('Error updating user filament quantity:', e)
+      throw e
+    }
+  },
+
+  async removeUserFilament(userFilamentId) {
+    try {
+      const result = await apiCall(`/user_filaments.php?id=${userFilamentId}`, {
+        method: 'DELETE'
+      })
+      return result
+    } catch (e) {
+      console.error('Error removing user filament:', e)
+      throw e
+    }
   }
 }
 
