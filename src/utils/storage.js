@@ -430,9 +430,13 @@ export const storage = {
   // User Filaments (client-owned filament spools)
   async getUserFilaments(userId) {
     try {
-      return await apiCall(`/user_filaments.php?userId=${userId}`)
+      console.log('Calling getUserFilaments for userId:', userId)
+      const result = await apiCall(`/user_filaments.php?userId=${userId}`)
+      console.log('getUserFilaments result:', result)
+      return result
     } catch (e) {
       console.error('Error reading user filaments:', e)
+      console.error('Error details:', e.message)
       return []
     }
   },

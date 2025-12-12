@@ -8,7 +8,22 @@ $method = $_SERVER['REQUEST_METHOD'];
 try {
     $pdo = getDBConnection();
     
+    // Ensure materials table exists first (required for foreign key)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS materials (
+        id VARCHAR(50) PRIMARY KEY,
+        user_id VARCHAR(50) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        color VARCHAR(50) NOT NULL,
+        material_type VARCHAR(50),
+        shop_link TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    
     // Ensure user_filaments table exists
+    // Note: Using SET FOREIGN_KEY_CHECKS=0 to avoid issues if tables don't exist yet
+    $pdo->exec("SET FOREIGN_KEY_CHECKS=0");
     $pdo->exec("CREATE TABLE IF NOT EXISTS user_filaments (
         id VARCHAR(50) PRIMARY KEY,
         user_id VARCHAR(50) NOT NULL,
@@ -22,6 +37,7 @@ try {
         FOREIGN KEY (material_id) REFERENCES materials(id) ON DELETE CASCADE,
         UNIQUE KEY unique_user_material (user_id, material_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("SET FOREIGN_KEY_CHECKS=1");
 
     switch ($method) {
         case 'GET':
@@ -50,7 +66,13 @@ try {
                 ORDER BY uf.created_at DESC
             ");
             $stmt->execute([$userId]);
-            $filaments = $stmt->fetchAll();
+            $filaments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // If no filaments found, return empty array
+            if (empty($filaments)) {
+                sendJSON([]);
+                return;
+            }
             
             $result = array_map(function($f) {
                 return [

@@ -80,9 +80,13 @@ const loadUserFilaments = async () => {
   }
 
   try {
-    userFilaments.value = await storage.getUserFilaments(user.id)
+    console.log('Loading filaments for user:', user.id)
+    const filaments = await storage.getUserFilaments(user.id)
+    console.log('Loaded filaments:', filaments)
+    userFilaments.value = filaments
   } catch (e) {
     console.error('Error loading user filaments:', e)
+    console.error('Error details:', e.message, e.stack)
   } finally {
     loading.value = false
   }
