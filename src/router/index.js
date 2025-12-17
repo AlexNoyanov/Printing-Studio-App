@@ -7,6 +7,7 @@ import Dashboard from '../views/Dashboard.vue'
 import FilamentsList from '../views/FilamentsList.vue'
 import Filaments from '../views/Filaments.vue'
 import YourFilaments from '../views/YourFilaments.vue'
+import Shop from '../views/Shop.vue'
 
 const routes = [
   {
@@ -58,6 +59,12 @@ const routes = [
     name: 'Filaments',
     component: Filaments,
     meta: { requiresAuth: true, requiresRole: 'printer' }
+  },
+  {
+    path: '/shop',
+    name: 'Shop',
+    component: Shop,
+    meta: { requiresAuth: true }
   }
 ]
 

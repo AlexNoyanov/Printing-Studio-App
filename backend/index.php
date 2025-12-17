@@ -49,6 +49,9 @@ if (empty($pathParts) || $pathParts[0] === '') {
         case 'health':
             require_once __DIR__ . '/api/health.php';
             break;
+        case 'shop':
+            require_once __DIR__ . '/api/shop.php';
+            break;
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Endpoint not found: ' . $endpoint]);

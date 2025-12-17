@@ -481,6 +481,30 @@ export const storage = {
       console.error('Error removing user filament:', e)
       throw e
     }
+  },
+
+  // Shop - Get all printed models from makerworld.com
+  async getShopModels() {
+    try {
+      return await apiCall('/shop.php')
+    } catch (e) {
+      console.error('Error loading shop models:', e)
+      return []
+    }
+  },
+
+  // Shop - Fetch model data from makerworld.com
+  async fetchMakerWorldData(url) {
+    try {
+      const result = await apiCall('/shop.php', {
+        method: 'POST',
+        body: JSON.stringify({ url })
+      })
+      return result
+    } catch (e) {
+      console.error('Error fetching makerworld data:', e)
+      throw e
+    }
   }
 }
 

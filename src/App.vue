@@ -12,6 +12,7 @@
           <router-link to="/your-filaments" v-if="userRole === 'user' && hasUserFilaments">Your Filaments</router-link>
           <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
           <router-link to="/filaments" v-if="userRole === 'printer' && hasPrinterFilaments">Filaments</router-link>
+          <router-link to="/shop">Shop</router-link>
           <button @click="logout" class="logout-btn">{{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}</button>
         </div>
       </div>

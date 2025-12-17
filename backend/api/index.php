@@ -39,6 +39,9 @@ switch ($endpoint) {
     case 'health':
         require_once $apiDir . 'health.php';
         break;
+    case 'shop':
+        require_once $apiDir . 'shop.php';
+        break;
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Endpoint not found: ' . $endpoint]);
