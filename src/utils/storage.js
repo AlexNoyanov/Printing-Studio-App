@@ -494,24 +494,94 @@ export const storage = {
   },
 
   // Shop - Fetch model data from makerworld.com
+  // This method is deliberately resilient:
+  // - Never throws for MakerWorld 403/HTML changes
+  // - Always returns at least a minimal model object based on the URL
   async fetchMakerWorldData(url) {
-    try {
-      if (!url || typeof url !== 'string') {
-        throw new Error('Invalid URL provided')
-      }
+    // Basic validation
+    if (!url || typeof url !== 'string') {
+      console.error('fetchMakerWorldData: invalid URL', url)
+      return makeShopFallbackModel(url || '', 'Invalid URL provided')
+    }
 
-      // Backend returns a model data object even if MakerWorld blocks previews,
-      // so we just pass it through without treating MakerWorld HTTP 403 as a hard error.
-      const result = await apiCall('/shop.php', {
+    try {
+      const response = await fetch(`${API_BASE}/shop.php`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ url })
       })
 
-      return result
+      let data = null
+      try {
+        data = await response.json()
+      } catch {
+        // Ignore JSON parse errors; will fall back below
+      }
+
+      // If backend responded with non-2xx or an error payload, return a fallback model
+      if (!response.ok || !data || typeof data !== 'object') {
+        const message =
+          data && typeof data.error === 'string'
+            ? data.error
+            : `HTTP error: ${response.status}`
+        console.warn('MakerWorld preview limited or failed:', message)
+        return makeShopFallbackModel(url, message)
+      }
+
+      // Happy path: backend already scraped or built a model object
+      return data
     } catch (e) {
       console.error('Error fetching makerworld data:', e)
-      // Re-throw with more context
-      throw new Error(e.message || 'Failed to fetch model data from makerworld.com')
+      // Network or unexpected failure – still return a safe fallback
+      return makeShopFallbackModel(url, e?.message || 'Request failed')
+    }
+  }
+}
+
+// Helper: build a minimal, safe model object for Shop tab when
+// MakerWorld blocks scraping (e.g. HTTP 403) or any error occurs.
+function makeShopFallbackModel(url, reason) {
+  try {
+    const u = new URL(url, 'https://makerworld.com')
+    const path = u.pathname.replace(/^\/+|\/+$/g, '')
+    const parts = path ? path.split('/') : []
+    const slug = parts.length ? parts[parts.length - 1] : 'MakerWorld Model'
+
+    const noteBase = 'Preview limited. Open on MakerWorld for full details.'
+    const note =
+      typeof reason === 'string' && reason.trim()
+        ? `Preview limited (${reason}). Open on MakerWorld for full details.`
+        : noteBase
+
+    return {
+      url,
+      title: slug,
+      description: '',
+      image: '',
+      author: '',
+      likes: 0,
+      downloads: 0,
+      views: 0,
+      tags: [],
+      partial: true,
+      note
+    }
+  } catch {
+    return {
+      url,
+      title: 'MakerWorld Model',
+      description: '',
+      image: '',
+      author: '',
+      likes: 0,
+      downloads: 0,
+      views: 0,
+      tags: [],
+      partial: true,
+      note:
+        'Preview limited. Open on MakerWorld for full details.'
     }
   }
 }
