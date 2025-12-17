@@ -244,7 +244,7 @@ try {
                 foreach ($linksWithCopies as $index => $linkData) {
                     $url = is_array($linkData) ? $linkData['url'] : $linkData;
                     $copies = is_array($linkData) && isset($linkData['copies']) ? max(1, intval($linkData['copies'])) : 1;
-                    $printed = false; // New links are not printed by default
+                    $printed = 0; // New links are not printed by default (0 = false, 1 = true for MySQL BOOLEAN)
                     $linkStmt->execute([$data['id'], $url, $copies, $printed, $index]);
                 }
                 
@@ -382,7 +382,7 @@ try {
             }
             
             $linkId = intval($data['linkId']);
-            $printed = (bool)$data['printed'];
+            $printed = (bool)$data['printed'] ? 1 : 0; // Convert boolean to integer for MySQL BOOLEAN type
             
             $stmt = $pdo->prepare("UPDATE order_links SET printed = ? WHERE id = ?");
             $stmt->execute([$printed, $linkId]);

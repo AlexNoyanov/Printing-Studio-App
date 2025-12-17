@@ -563,5 +563,67 @@ onUnmounted(() => {
   font-weight: 500;
   border: 1px solid rgba(135, 206, 235, 0.3);
 }
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .order-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .status-control {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    width: 100%;
+  }
+
+  .order-card {
+    padding: 1rem;
+  }
+
+  .order-header h3 {
+    font-size: 1.2rem;
+  }
+}
 </style>
 

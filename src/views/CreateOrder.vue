@@ -409,6 +409,7 @@ onMounted(() => {
   background: #1a1a1a;
   color: #e0e0e0;
   min-height: 60px;
+  position: relative;
 }
 
 .color-option:hover {
@@ -419,10 +420,33 @@ onMounted(() => {
 .color-option.selected {
   border-color: #87CEEB;
   background: #1a3a4a;
+  box-shadow: 0 0 15px rgba(135, 206, 235, 0.3);
+}
+
+.color-option.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  background: #87CEEB;
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.5);
 }
 
 .color-option input[type="checkbox"] {
-  cursor: pointer;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .color-name {
@@ -518,6 +542,72 @@ onMounted(() => {
 
 .cancel-btn:hover {
   background: #4a4a4a;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .order-form-card {
+    padding: 1.5rem;
+  }
+
+  .colors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .color-option {
+    padding: 0.5rem;
+    min-height: 50px;
+    gap: 0.5rem;
+  }
+
+  .color-preview {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    max-width: 30px;
+    max-height: 30px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button,
+  .form-actions a {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .order-form-card {
+    padding: 1rem;
+  }
+
+  .colors-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .color-name {
+    font-size: 0.85rem;
+  }
 }
 </style>
 

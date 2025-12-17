@@ -591,5 +591,63 @@ onMounted(() => {
 .delete-btn:hover {
   background: #ff6b6b;
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .color-form-card,
+  .colors-list-card {
+    padding: 1.5rem;
+  }
+
+  .colors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .color-form-card,
+  .colors-list-card {
+    padding: 1rem;
+  }
+
+  .colors-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .color-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .color-actions {
+    width: 100%;
+  }
+}
 </style>
 

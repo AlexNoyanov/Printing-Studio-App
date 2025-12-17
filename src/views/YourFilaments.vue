@@ -251,9 +251,53 @@ onMounted(() => {
   background: #6bb6d6;
 }
 
+/* Responsive Design */
 @media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
   .filaments-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .filament-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .filaments-grid {
+    gap: 1rem;
+  }
+
+  .filament-card {
+    padding: 1rem;
+  }
+
+  .filament-swatch {
+    height: 100px;
+  }
+
+  .filament-info h3 {
+    font-size: 1.1rem;
   }
 }
 </style>

@@ -645,5 +645,78 @@ onMounted(() => {
     opacity: 0.8;
   }
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .spool-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .spool-wrapper {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .spool-body {
+    width: 150px;
+    height: 150px;
+  }
+
+  .filament-line-wrapper {
+    left: 75px;
+  }
+
+  .spool-info {
+    width: 100%;
+  }
+
+  .filament-info-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .spool-body {
+    width: 120px;
+    height: 120px;
+  }
+
+  .filament-line-wrapper {
+    left: 60px;
+  }
+
+  .spool-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .shop-link-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filament-info-card {
+    padding: 1rem;
+  }
+}
 </style>
 

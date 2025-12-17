@@ -11,7 +11,7 @@
           <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
           <router-link to="/your-filaments" v-if="userRole === 'user' && hasUserFilaments">Your Filaments</router-link>
           <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
-          <router-link to="/filaments" v-if="userRole === 'printer'">Filaments</router-link>
+          <router-link to="/filaments" v-if="userRole === 'printer' && hasPrinterFilaments">Filaments</router-link>
           <button @click="logout" class="logout-btn">{{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}</button>
         </div>
       </div>
@@ -28,6 +28,7 @@ import logoImage from './logos/Logo-black.png'
 
 const router = useRouter()
 const hasUserFilaments = ref(false)
+const hasPrinterFilaments = ref(false)
 
 const isAuthenticated = computed(() => {
   return localStorage.getItem('currentUser') !== null
@@ -86,27 +87,65 @@ const checkUserFilaments = async () => {
   }
 }
 
+// Check if printer has materials/colors (filaments)
+const checkPrinterFilaments = async () => {
+  if (userRole.value !== 'printer') {
+    hasPrinterFilaments.value = false
+    return
+  }
+
+  try {
+    const userStr = localStorage.getItem('currentUser')
+    if (!userStr) {
+      hasPrinterFilaments.value = false
+      return
+    }
+    const userData = JSON.parse(userStr)
+    
+    // Check both materials and colors (for backward compatibility)
+    const [materials, colors] = await Promise.all([
+      storage.getMaterials(userData.id),
+      storage.getColors(userData.id)
+    ])
+    
+    hasPrinterFilaments.value = materials.length > 0 || colors.length > 0
+  } catch (e) {
+    console.error('Error checking printer filaments:', e)
+    hasPrinterFilaments.value = false
+  }
+}
+
 // Update document title based on user role
 watch([appTitle, isAuthenticated], ([title, authenticated]) => {
   if (authenticated) {
     document.title = title
     checkUserFilaments()
+    checkPrinterFilaments()
   } else {
     document.title = '3D Printing Studio'
     hasUserFilaments.value = false
+    hasPrinterFilaments.value = false
   }
 }, { immediate: true })
 
-// Also check when route changes (in case filaments were just assigned)
+// Also check when route changes (in case filaments were just assigned/created)
 watch(() => router.currentRoute.value.path, () => {
-  if (isAuthenticated.value && userRole.value === 'user') {
-    checkUserFilaments()
+  if (isAuthenticated.value) {
+    if (userRole.value === 'user') {
+      checkUserFilaments()
+    } else if (userRole.value === 'printer') {
+      checkPrinterFilaments()
+    }
   }
 })
 
 onMounted(() => {
-  if (isAuthenticated.value && userRole.value === 'user') {
-    checkUserFilaments()
+  if (isAuthenticated.value) {
+    if (userRole.value === 'user') {
+      checkUserFilaments()
+    } else if (userRole.value === 'printer') {
+      checkPrinterFilaments()
+    }
   }
 })
 
@@ -180,6 +219,7 @@ body {
   display: flex;
   gap: 1.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .nav-links a {
@@ -188,6 +228,7 @@ body {
   font-weight: 500;
   transition: all 0.3s;
   text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
+  white-space: nowrap;
 }
 
 .nav-links a:hover,
@@ -205,10 +246,86 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: background 0.3s;
+  white-space: nowrap;
+  font-size: 0.9rem;
 }
 
 .logout-btn:hover {
   background: #6bb6d6;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .navbar {
+    padding: 1rem;
+  }
+
+  .nav-container {
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem;
+  }
+
+  .app-title {
+    font-size: 1.2rem;
+    justify-self: start;
+    margin-left: 1rem;
+  }
+
+  .nav-links {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .nav-links a {
+    font-size: 0.9rem;
+  }
+
+  .logout-btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .nav-container {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .logo-section {
+    justify-self: center;
+  }
+
+  .logo-image {
+    height: 60px;
+  }
+
+  .app-title {
+    font-size: 1rem;
+    justify-self: center;
+    margin-left: 0;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .nav-links a,
+  .logout-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+  }
 }
 </style>
 

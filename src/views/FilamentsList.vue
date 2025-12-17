@@ -1234,5 +1234,81 @@ onMounted(() => {
   background: rgba(255, 107, 107, 0.2);
   border-color: #ff6b6b;
 }
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .filaments-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .filament-form-card,
+  .filaments-list-card,
+  .assign-filament-card {
+    padding: 1.5rem;
+  }
+
+  .filaments-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .materials-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .filament-form-card,
+  .filaments-list-card,
+  .assign-filament-card {
+    padding: 1rem;
+  }
+
+  .color-picker-wrapper {
+    flex-direction: column;
+  }
+
+  .add-type-input-group {
+    flex-direction: column;
+  }
+
+  .add-type-btn {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
 </style>
 
