@@ -41,11 +41,41 @@ try {
                         'user_id' => $link['user_id'],
                         'user_name' => $link['user_name'],
                         'order_status' => $link['status'],
-                        'order_created_at' => $link['order_created_at']
+                        'order_created_at' => $link['order_created_at'],
+                        // Will be populated below
+                        'colors' => []
                     ];
                 } else {
                     // If same model printed multiple times, sum copies
                     $uniqueModels[$normalizedUrl]['copies'] += intval($link['copies']);
+                }
+            }
+            
+            // Attach plastics (colors) used for each order
+            if (!empty($links)) {
+                $orderIds = array_values(array_unique(array_column($links, 'order_id')));
+                if (!empty($orderIds)) {
+                    $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+                    $colorStmt = $pdo->prepare("SELECT order_id, color_name FROM order_colors WHERE order_id IN ($placeholders)");
+                    $colorStmt->execute($orderIds);
+                    $colorRows = $colorStmt->fetchAll();
+                    
+                    $colorsMap = [];
+                    foreach ($colorRows as $row) {
+                        $oid = $row['order_id'];
+                        if (!isset($colorsMap[$oid])) {
+                            $colorsMap[$oid] = [];
+                        }
+                        if (!in_array($row['color_name'], $colorsMap[$oid], true)) {
+                            $colorsMap[$oid][] = $row['color_name'];
+                        }
+                    }
+                    
+                    foreach ($uniqueModels as &$model) {
+                        $oid = $model['order_id'];
+                        $model['colors'] = $colorsMap[$oid] ?? [];
+                    }
+                    unset($model);
                 }
             }
             
