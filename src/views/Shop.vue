@@ -28,7 +28,7 @@
           <p>Loading model data...</p>
         </div>
         <div v-else-if="model.error" class="model-error">
-          <p>Failed to load model data</p>
+          <p>{{ model.errorMessage || 'Failed to load model data' }}</p>
           <button @click="loadModelData(model)" class="retry-btn-small">Retry</button>
         </div>
         <div v-else class="model-content">
@@ -45,7 +45,7 @@
             </div>
           </div>
           
-          <div class="model-info">
+            <div class="model-info">
             <h3 class="model-title">
               <a
                 :href="model.url"
@@ -53,12 +53,16 @@
                 rel="noopener noreferrer"
                 class="model-link"
               >
-                {{ model.data && model.data.title ? model.data.title : 'MakerWorld Model' }}
+                {{ getModelTitle(model) }}
               </a>
             </h3>
             
             <div v-if="model.data && model.data.description" class="model-description">
               <p>{{ truncateText(model.data.description, 150) }}</p>
+            </div>
+            
+            <div v-if="model.error && model.errorMessage" class="model-error-notice">
+              <small>⚠ {{ model.errorMessage }}</small>
             </div>
             
             <div class="model-meta">
@@ -71,7 +75,7 @@
               <div class="meta-item">
                 <strong>Copies:</strong> {{ model.copies }}
               </div>
-              <div v-if="model.data" class="model-stats">
+              <div v-if="model.data && (model.data.likes > 0 || model.data.downloads > 0 || model.data.views > 0)" class="model-stats">
                 <span v-if="model.data.likes > 0" class="stat-item">
                   👍 {{ formatNumber(model.data.likes) }}
                 </span>
@@ -109,22 +113,32 @@ const models = ref([])
 const isLoading = ref(false)
 const error = ref('')
 
+// Initialize model structure
+const initializeModel = (model) => {
+  return {
+    ...model,
+    loading: true,
+    error: false,
+    errorMessage: '',
+    data: null
+  }
+}
+
 const loadModels = async () => {
   isLoading.value = true
   error.value = ''
   
   try {
     const shopModels = await storage.getShopModels()
-    models.value = shopModels.map(model => ({
-      ...model,
-      loading: true,
-      error: false,
-      data: null
-    }))
+    models.value = shopModels.map(initializeModel)
     
-    // Load data for each model
-    for (const model of models.value) {
-      await loadModelData(model)
+    // Load data for each model (with delay to avoid overwhelming the server)
+    for (let i = 0; i < models.value.length; i++) {
+      await loadModelData(models.value[i])
+      // Small delay between requests to avoid rate limiting
+      if (i < models.value.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+      }
     }
   } catch (e) {
     console.error('Error loading shop models:', e)
@@ -140,12 +154,8 @@ const loadModelData = async (model) => {
   
   try {
     const modelData = await storage.fetchMakerWorldData(model.url)
-    model.data = modelData
-    model.error = false
-  } catch (e) {
-    console.error('Error loading model data:', e)
-    model.error = true
-    model.data = {
+
+    model.data = modelData || {
       title: 'MakerWorld Model',
       description: '',
       image: '',
@@ -153,6 +163,26 @@ const loadModelData = async (model) => {
       likes: 0,
       downloads: 0,
       views: 0
+    }
+    model.error = false
+  } catch (e) {
+    console.error('Error loading model data:', e)
+    model.error = true
+    model.errorMessage = e.message || 'Failed to load model data'
+    
+    // Provide fallback data with basic info from the URL
+    const urlParts = model.url.split('/')
+    const modelId = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || 'model'
+    
+    model.data = {
+      title: `MakerWorld Model (${modelId})`,
+      description: '',
+      image: '',
+      author: '',
+      likes: 0,
+      downloads: 0,
+      views: 0,
+      url: model.url
     }
   } finally {
     model.loading = false
@@ -172,6 +202,16 @@ const formatNumber = (num) => {
     return (num / 1000).toFixed(1) + 'k'
   }
   return num.toString()
+}
+
+const getModelTitle = (model) => {
+  if (model.data && model.data.title && model.data.title !== 'MakerWorld Model') {
+    return model.data.title
+  }
+  // Extract model ID or name from URL as fallback
+  const urlParts = model.url.split('/')
+  const modelId = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2] || ''
+  return modelId ? `MakerWorld Model: ${modelId}` : 'MakerWorld Model'
 }
 
 const handleImageError = (event) => {
@@ -354,6 +394,19 @@ onMounted(() => {
   font-size: 0.95rem;
   line-height: 1.5;
   flex: 1;
+}
+
+.model-error-notice {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(255, 107, 107, 0.1);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.model-error-notice small {
+  color: #ff6b6b;
+  font-size: 0.85rem;
 }
 
 .model-meta {

@@ -10,6 +10,7 @@ dist/
 backend/config.php
 backend/test_db.php
 backend/test_cors.php
+deploy-config.json
 
 # Data files
 data/

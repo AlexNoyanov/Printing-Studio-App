@@ -496,14 +496,22 @@ export const storage = {
   // Shop - Fetch model data from makerworld.com
   async fetchMakerWorldData(url) {
     try {
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid URL provided')
+      }
+
+      // Backend returns a model data object even if MakerWorld blocks previews,
+      // so we just pass it through without treating MakerWorld HTTP 403 as a hard error.
       const result = await apiCall('/shop.php', {
         method: 'POST',
         body: JSON.stringify({ url })
       })
+
       return result
     } catch (e) {
       console.error('Error fetching makerworld data:', e)
-      throw e
+      // Re-throw with more context
+      throw new Error(e.message || 'Failed to fetch model data from makerworld.com')
     }
   }
 }

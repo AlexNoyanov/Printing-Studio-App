@@ -67,14 +67,21 @@ try {
                 sendJSON(['error' => 'URL must be from makerworld.com'], 400);
             }
             
-            // Fetch model data from makerworld.com
-            $modelData = fetchMakerWorldData($url);
+            // Check if cURL is available
+            if (!function_exists('curl_init')) {
+                sendJSON(['error' => 'cURL extension is not available on the server'], 500);
+            }
             
-            if ($modelData === null) {
+            // Fetch model data from makerworld.com.
+            // This function always returns a model data array with sensible fallbacks,
+            // even if MakerWorld blocks automated requests (e.g. HTTP 403).
+            $result = fetchMakerWorldData($url);
+            
+            if ($result === null) {
                 sendJSON(['error' => 'Failed to fetch model data from makerworld.com'], 500);
             }
             
-            sendJSON($modelData);
+            sendJSON($result);
             break;
             
         default:
@@ -92,8 +99,17 @@ try {
  */
 function fetchMakerWorldData($url) {
     try {
+        // Validate URL format
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return makeFallbackModelData($url, 'Invalid URL format');
+        }
+        
         // Initialize cURL
         $ch = curl_init();
+        
+        if ($ch === false) {
+            return makeFallbackModelData($url, 'Failed to initialize cURL');
+        }
         
         // Set cURL options
         curl_setopt_array($ch, [
@@ -104,29 +120,58 @@ function fetchMakerWorldData($url) {
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             CURLOPT_HTTPHEADER => [
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Language: en-US,en;q=0.5',
-                'Accept-Encoding: gzip, deflate',
+                'Accept-Language: en-US,en;q=0.9',
             ],
+            CURLOPT_ENCODING => '', // Enable automatic decompression
         ]);
         
         $html = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
+        $curlInfo = curl_getinfo($ch);
         curl_close($ch);
         
-        if ($html === false || !empty($error) || $httpCode !== 200) {
-            error_log("Failed to fetch makerworld.com: HTTP $httpCode, Error: $error");
-            return null;
+        if ($html === false || !empty($error)) {
+            error_log("cURL error fetching makerworld.com: $error (URL: $url)");
+            $reason = $error ? "cURL error: $error" : 'Unknown cURL error';
+            return makeFallbackModelData($url, $reason);
+        }
+        
+        if ($httpCode !== 200) {
+            error_log("HTTP error fetching makerworld.com: HTTP $httpCode (URL: $url)");
+            return makeFallbackModelData($url, "HTTP error: $httpCode");
+        }
+        
+        if (empty($html)) {
+            error_log("Empty response from makerworld.com (URL: $url)");
+            return makeFallbackModelData($url, 'Received empty response from server');
         }
         
         // Create DOMDocument
+        if (!class_exists('DOMDocument')) {
+            error_log("DOMDocument class not available");
+            return makeFallbackModelData($url, 'DOMDocument extension is not available');
+        }
+        
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
-        @$dom->loadHTML('<?xml encoding="UTF-8">' . $html);
-        libxml_clear_errors();
+        
+        // Try to load HTML with proper encoding handling
+        $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        $loaded = @$dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        
+        if (!$loaded) {
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+            error_log("Failed to parse HTML from makerworld.com: " . print_r($errors, true));
+            // Continue anyway - sometimes HTML parsing has warnings but still works
+        } else {
+            libxml_clear_errors();
+        }
         
         $xpath = new DOMXPath($dom);
         
@@ -267,8 +312,11 @@ function fetchMakerWorldData($url) {
         return $modelData;
         
     } catch (Exception $e) {
-        error_log("Error fetching makerworld.com data: " . $e->getMessage());
-        return null;
+        error_log("Exception fetching makerworld.com data: " . $e->getMessage() . " (URL: $url)");
+        return makeFallbackModelData($url, 'Exception: ' . $e->getMessage());
+    } catch (Error $e) {
+        error_log("Fatal error fetching makerworld.com data: " . $e->getMessage() . " (URL: $url)");
+        return makeFallbackModelData($url, 'Fatal error: ' . $e->getMessage());
     }
 }
 
@@ -289,4 +337,34 @@ function parseNumber($str) {
     
     $num = floatval($str);
     return intval($num * $multiplier);
+}
+
+/**
+ * Build a minimal fallback model data structure when MakerWorld
+ * blocks automated requests (e.g. HTTP 403) or scraping fails.
+ */
+function makeFallbackModelData($url, $reason = null) {
+    $parsedUrl = parse_url($url);
+    $path = trim($parsedUrl['path'] ?? '', '/');
+    $pathParts = $path !== '' ? explode('/', $path) : [];
+    $slug = !empty($pathParts) ? end($pathParts) : 'MakerWorld Model';
+    
+    $note = 'Preview limited. Open on MakerWorld for full details.';
+    if ($reason) {
+        $note = "Preview limited ({$reason}). Open on MakerWorld for full details.";
+    }
+    
+    return [
+        'url' => $url,
+        'title' => $slug,
+        'description' => '',
+        'image' => '',
+        'author' => '',
+        'likes' => 0,
+        'downloads' => 0,
+        'views' => 0,
+        'tags' => [],
+        'partial' => true,
+        'note' => $note
+    ];
 }

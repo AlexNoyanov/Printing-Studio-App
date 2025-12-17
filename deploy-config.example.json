@@ -1,0 +1,22 @@
+{
+  "ftp": {
+    "server": "91.236.136.126",
+    "username": "your-ftp-username",
+    "password": "your-ftp-password",
+    "remoteDir": "/Apps/Printing/backend"
+  },
+  "localPaths": {
+    "apiDir": "backend/api",
+    "backendDir": "backend"
+  },
+  "exclude": [
+    "**/.git*",
+    "**/.git*/**",
+    "**/node_modules/**",
+    "**/test_*.php",
+    "**/config.php",
+    "**/config.example.php",
+    "**/cors-test.php",
+    "**/*.log"
+  ]
+}
