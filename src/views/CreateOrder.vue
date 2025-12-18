@@ -106,11 +106,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { storage } from '../utils/storage'
 
 const router = useRouter()
-const route = useRoute()
 const modelLinks = ref([{ url: '', copies: 1 }])
 const selectedColors = ref([])
 const comment = ref('')
@@ -155,36 +154,6 @@ const loadColors = async () => {
     console.error('Error loading filaments/colors:', e)
     // Fallback to empty array if API fails
     availableColors.value = []
-  }
-}
-
-// Prefill form when coming from Shop tab
-const prefillFromRoute = () => {
-  const modelUrl = typeof route.query.modelUrl === 'string' ? route.query.modelUrl.trim() : ''
-  const colorsParam = typeof route.query.colors === 'string' ? route.query.colors : ''
-
-  if (modelUrl) {
-    // Replace current links with a single pre-filled link
-    modelLinks.value = [{ url: modelUrl, copies: 1 }]
-  }
-
-  if (colorsParam && availableColors.value.length > 0) {
-    const names = colorsParam
-      .split(',')
-      .map(name => name.trim())
-      .filter(Boolean)
-
-    const selectedIds = new Set()
-    for (const name of names) {
-      const color = availableColors.value.find(c => c.name === name)
-      if (color) {
-        selectedIds.add(color.id)
-      }
-    }
-
-    if (selectedIds.size > 0) {
-      selectedColors.value = Array.from(selectedIds)
-    }
   }
 }
 
@@ -263,9 +232,8 @@ const handleSubmit = async () => {
   }
 }
 
-onMounted(async () => {
-  await loadColors()
-  prefillFromRoute()
+onMounted(() => {
+  loadColors()
 })
 </script>
 
