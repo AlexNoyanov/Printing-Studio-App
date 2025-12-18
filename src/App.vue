@@ -2,18 +2,54 @@
   <div id="app">
     <nav v-if="isAuthenticated" class="navbar">
       <div class="nav-container">
-        <div class="logo-section">
-          <img :src="logoImage" alt="Logo" class="logo-image" />
+        <div class="nav-left">
+          <div class="logo-section">
+            <img :src="logoImage" alt="Logo" class="logo-image" />
+          </div>
+          <h1 class="app-title">{{ appTitle }}</h1>
         </div>
-        <h1 class="app-title">{{ appTitle }}</h1>
-        <div class="nav-links">
-          <router-link to="/orders" v-if="userRole === 'user'">My Orders</router-link>
-          <router-link to="/create-order" v-if="userRole === 'user'">Create Order</router-link>
-          <router-link to="/your-filaments" v-if="userRole === 'user' && hasUserFilaments">Your Filaments</router-link>
-          <router-link to="/dashboard" v-if="userRole === 'printer'">Dashboard</router-link>
-          <router-link to="/filaments" v-if="userRole === 'printer' && hasPrinterFilaments">Filaments</router-link>
-          <router-link to="/shop">Shop</router-link>
-          <button @click="logout" class="logout-btn">{{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}</button>
+
+        <button
+          type="button"
+          class="nav-toggle"
+          @click="toggleNav"
+          aria-label="Toggle navigation"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div :class="['nav-links', { 'nav-links--open': isNavOpen }]">
+          <router-link to="/orders" v-if="userRole === 'user'" @click="closeNav">
+            My Orders
+          </router-link>
+          <router-link to="/create-order" v-if="userRole === 'user'" @click="closeNav">
+            Create Order
+          </router-link>
+          <router-link
+            to="/your-filaments"
+            v-if="userRole === 'user' && hasUserFilaments"
+            @click="closeNav"
+          >
+            Your Filaments
+          </router-link>
+          <router-link to="/dashboard" v-if="userRole === 'printer'" @click="closeNav">
+            Dashboard
+          </router-link>
+          <router-link
+            to="/filaments"
+            v-if="userRole === 'printer' && hasPrinterFilaments"
+            @click="closeNav"
+          >
+            Filaments
+          </router-link>
+          <router-link to="/shop" @click="closeNav">
+            Shop
+          </router-link>
+          <button @click="logout" class="logout-btn">
+            {{ currentUsername ? `${currentUsername}, Logout` : 'Logout' }}
+          </button>
         </div>
       </div>
     </nav>
@@ -30,6 +66,15 @@ import logoImage from './logos/Logo-black.png'
 const router = useRouter()
 const hasUserFilaments = ref(false)
 const hasPrinterFilaments = ref(false)
+const isNavOpen = ref(false)
+
+const toggleNav = () => {
+  isNavOpen.value = !isNavOpen.value
+}
+
+const closeNav = () => {
+  isNavOpen.value = false
+}
 
 const isAuthenticated = computed(() => {
   return localStorage.getItem('currentUser') !== null
@@ -132,6 +177,7 @@ watch([appTitle, isAuthenticated], ([title, authenticated]) => {
 // Also check when route changes (in case filaments were just assigned/created)
 watch(() => router.currentRoute.value.path, () => {
   if (isAuthenticated.value) {
+    isNavOpen.value = false
     if (userRole.value === 'user') {
       checkUserFilaments()
     } else if (userRole.value === 'printer') {
@@ -151,6 +197,7 @@ onMounted(() => {
 })
 
 const logout = () => {
+  closeNav()
   localStorage.removeItem('currentUser')
   router.push('/login')
 }
@@ -176,156 +223,180 @@ body {
 }
 
 .navbar {
-  background: #000000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  padding: 1rem 2rem;
-  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 0.75rem 1.5rem;
+  background: rgba(3, 7, 18, 0.92);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  margin-bottom: 1.5rem;
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  gap: 1.25rem;
   position: relative;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
 }
 
 .logo-section {
   display: flex;
   align-items: center;
-  justify-self: start;
 }
 
 .logo-image {
-  height: 90px;
+  height: 40px;
   width: auto;
   object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(148, 163, 184, 0.35));
 }
 
 .app-title {
-  color: #87CEEB;
-  font-size: 1.5rem;
-  margin: 0;
-  text-align: center;
-  justify-self: center;
+  color: #e5e7eb;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.nav-links {
-  justify-self: end;
+.nav-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.16), transparent 55%);
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-toggle span + span {
+  margin-top: 4px;
 }
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 1.5rem;
 }
 
 .nav-links a {
   text-decoration: none;
-  color: #a0d4e8;
+  color: #e5e7eb;
   font-weight: 500;
-  transition: all 0.3s;
-  text-shadow: 0 0 5px rgba(135, 206, 235, 0.3);
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+  border-radius: 999px;
+  transition: color 0.2s ease, background-color 0.2s ease;
   white-space: nowrap;
 }
 
-.nav-links a:hover,
+.nav-links a:hover {
+  background: rgba(148, 163, 184, 0.14);
+  color: #e5e7eb;
+}
+
 .nav-links a.router-link-active {
-  color: #87CEEB;
-  text-shadow: 0 0 10px rgba(135, 206, 235, 0.6), 0 0 15px rgba(135, 206, 235, 0.4);
+  color: #38bdf8;
 }
 
 .logout-btn {
-  background: #87CEEB;
-  color: #000;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  background: transparent;
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.3s;
+  font-size: 0.85rem;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
-  font-size: 0.9rem;
 }
 
 .logout-btn:hover {
-  background: #6bb6d6;
+  background: rgba(248, 250, 252, 0.06);
+  border-color: rgba(248, 250, 252, 0.8);
+  color: #f9fafb;
 }
 
 /* Responsive Design */
-@media (max-width: 968px) {
-  .navbar {
-    padding: 1rem;
-  }
-
-  .nav-container {
-    grid-template-columns: auto 1fr;
-    gap: 0.5rem;
-  }
-
+@media (max-width: 900px) {
   .app-title {
-    font-size: 1.2rem;
-    justify-self: start;
-    margin-left: 1rem;
-  }
-
-  .nav-links {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-  }
-
-  .nav-links a {
-    font-size: 0.9rem;
-  }
-
-  .logout-btn {
-    font-size: 0.85rem;
-    padding: 0.4rem 0.8rem;
+    font-size: 0.95rem;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .navbar {
-    padding: 0.75rem;
+    padding: 0.6rem 1rem;
     margin-bottom: 1rem;
   }
 
-  .nav-container {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .logo-section {
-    justify-self: center;
-  }
-
-  .logo-image {
-    height: 60px;
-  }
-
-  .app-title {
-    font-size: 1rem;
-    justify-self: center;
-    margin-left: 0;
+  .nav-toggle {
+    display: inline-flex;
   }
 
   .nav-links {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.6rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.9rem;
+    background: rgba(15, 23, 42, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.85);
     flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
+    align-items: stretch;
+    gap: 0.4rem;
+    min-width: 220px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .nav-links--open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 
   .nav-links a,
   .logout-btn {
     width: 100%;
-    text-align: center;
-    padding: 0.5rem;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.6rem;
+  }
+
+  .nav-links a:hover {
+    background: rgba(148, 163, 184, 0.16);
   }
 }
 </style>

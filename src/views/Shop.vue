@@ -306,7 +306,6 @@ onMounted(() => {
 .page-header h1 {
   color: #87CEEB;
   font-size: 2.5rem;
-  text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3), 2px 2px 4px rgba(0, 0, 0, 0.3);
   background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 50%, #4da6c2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -579,7 +578,7 @@ onMounted(() => {
   background: transparent;
   color: #87CEEB;
   text-decoration: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0.55rem 0.9rem;
   border-radius: 5px;
   font-weight: 600;
   transition: background 0.3s;
@@ -587,7 +586,8 @@ onMounted(() => {
   border: 1px solid rgba(135, 206, 235, 0.45);
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .view-model-btn:hover {
