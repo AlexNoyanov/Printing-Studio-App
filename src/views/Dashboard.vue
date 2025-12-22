@@ -66,6 +66,9 @@
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     {{ order.userName }}
+                    <span v-if="getUserRating(order.userId)" class="rating-display">
+                      ⭐ {{ getUserRating(order.userId) }}/10
+                    </span>
                   </span>
                   <span class="date-badge">
                     <svg class="date-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -191,6 +194,46 @@
               <p class="comment-text">{{ order.comment }}</p>
             </div>
             
+            <div class="order-section" v-if="order.status === 'Done'">
+              <div class="section-header">
+                <svg class="section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                <span class="section-title">Rate User</span>
+              </div>
+              <div class="rating-section">
+                <div class="rating-input-group">
+                  <label class="rating-label">User Rating (0-10):</label>
+                  <div class="rating-controls">
+                    <input
+                      type="number"
+                      :value="getOrderRating(order.id)"
+                      @input="setOrderRating(order.id, $event.target.value)"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      class="rating-input"
+                      placeholder="0-10"
+                    />
+                    <button
+                      @click="saveUserRating(order.userId, order.id)"
+                      class="save-rating-btn"
+                      :disabled="!canSaveRating(order.id)"
+                    >
+                      Save Rating
+                    </button>
+                    <div v-if="!order.userId" style="color: #ff6b6b; font-size: 0.8rem; margin-top: 0.5rem;">
+                      Warning: User ID not found in order
+                    </div>
+                  </div>
+                  <div v-if="getOrderRating(order.id)" class="rating-preview">
+                    <span class="rating-stars">{{ getRatingStars(getOrderRating(order.id)) }}</span>
+                    <span class="rating-value">{{ getOrderRating(order.id) }}/10</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="order-footer" v-if="order.updatedAt !== order.createdAt">
               <span class="updated-badge">
                 <svg class="update-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -219,6 +262,8 @@ const selectedStatus = ref('')
 const isLoading = ref(false)
 const expandedOrders = ref(new Set())
 const allFilaments = ref([])
+const userRatings = ref({}) // { userId: rating }
+const orderRatings = ref({}) // { orderId: rating } - temporary rating before saving
 let refreshInterval = null
 
 const statuses = ['Created', 'Reviewed', 'Printing', 'Printed', 'Delivery', 'Done']
@@ -245,10 +290,33 @@ const loadOrders = async () => {
   try {
     const allOrders = await storage.getOrders()
     orders.value = allOrders
+    // Load user ratings for all unique users
+    await loadUserRatings()
   } catch (e) {
     console.error('Error loading orders:', e)
   } finally {
     isLoading.value = false
+  }
+}
+
+const loadUserRatings = async () => {
+  try {
+    // Get all unique user IDs from orders
+    const userIds = [...new Set(orders.value.map(o => o.userId).filter(Boolean))]
+    
+    // Load ratings for each user
+    for (const userId of userIds) {
+      try {
+        const user = await storage.getUser(userId)
+        if (user && user.rating !== null && user.rating !== undefined) {
+          userRatings.value[userId] = parseFloat(user.rating)
+        }
+      } catch (e) {
+        console.error(`Error loading rating for user ${userId}:`, e)
+      }
+    }
+  } catch (e) {
+    console.error('Error loading user ratings:', e)
   }
 }
 
@@ -292,6 +360,80 @@ const updateStatus = async (orderId, newStatus) => {
     console.error('Error updating order status:', e)
     alert('Failed to update order status. Please try again.')
   }
+}
+
+const getOrderRating = (orderId) => {
+  return orderRatings.value[orderId] || null
+}
+
+const setOrderRating = (orderId, value) => {
+  const numValue = parseFloat(value)
+  if (!isNaN(numValue) && numValue >= 0 && numValue <= 10) {
+    orderRatings.value[orderId] = numValue
+  } else if (value === '' || value === null) {
+    orderRatings.value[orderId] = null
+  }
+}
+
+const canSaveRating = (orderId) => {
+  const rating = orderRatings.value[orderId]
+  return rating !== null && rating !== undefined && !isNaN(rating) && rating >= 0 && rating <= 10
+}
+
+const saveUserRating = async (userId, orderId) => {
+  const rating = orderRatings.value[orderId]
+  if (!canSaveRating(orderId)) {
+    return
+  }
+
+  if (!userId) {
+    alert('Error: User ID is missing. Cannot save rating.')
+    console.error('userId is missing in saveUserRating')
+    return
+  }
+
+  try {
+    console.log('Saving rating:', { userId, rating, orderId })
+    await storage.updateUserRating(userId, rating)
+    
+    // Reload user data to get the actual calculated average rating
+    try {
+      const user = await storage.getUser(userId)
+      if (user && user.rating !== null && user.rating !== undefined) {
+        userRatings.value[userId] = parseFloat(user.rating)
+      }
+    } catch (e) {
+      console.error('Error reloading user after rating save:', e)
+      // Fallback: use the rating we just saved (even though it's the individual, not average)
+      userRatings.value[userId] = rating
+    }
+    
+    // Clear temporary order rating
+    delete orderRatings.value[orderId]
+    
+    // Show success feedback
+    const finalRating = userRatings.value[userId] || rating
+    alert(`Rating saved successfully! User's average rating is now ${finalRating.toFixed(1)}/10`)
+  } catch (e) {
+    console.error('Error saving user rating:', e)
+    const errorMsg = e.message || 'Unknown error'
+    alert(`Failed to save rating: ${errorMsg}. Please try again.`)
+  }
+}
+
+const getUserRating = (userId) => {
+  return userRatings.value[userId] || null
+}
+
+const getRatingStars = (rating) => {
+  if (!rating) return ''
+  const fullStars = Math.floor(rating)
+  const hasHalfStar = rating % 1 >= 0.5
+  let stars = '⭐'.repeat(fullStars)
+  if (hasHalfStar) {
+    stars += '½'
+  }
+  return stars
 }
 
 const togglePrinted = async (orderId, linkId, printed) => {
@@ -652,6 +794,27 @@ onUnmounted(() => {
   user-select: none;
 }
 
+@media (min-width: 1024px) {
+  .order-header {
+    gap: 2rem;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 1200px) {
+  .order-header {
+    gap: 3rem;
+    padding: 1.5rem 2.5rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .order-header {
+    gap: 4rem;
+    padding: 1.75rem 3rem;
+  }
+}
+
 .order-header:hover {
   background: linear-gradient(135deg, rgba(32, 32, 32, 0.9) 0%, rgba(25, 25, 25, 0.95) 100%);
 }
@@ -663,6 +826,21 @@ onUnmounted(() => {
 .order-info {
   flex: 1;
   min-width: 0;
+  max-width: calc(100% - 220px);
+}
+
+@media (min-width: 1200px) {
+  .order-info {
+    padding-right: 2rem;
+    max-width: calc(100% - 280px);
+  }
+}
+
+@media (min-width: 1400px) {
+  .order-info {
+    padding-right: 3rem;
+    max-width: calc(100% - 340px);
+  }
 }
 
 .order-id-section {
@@ -736,6 +914,29 @@ onUnmounted(() => {
   gap: 0.5rem;
   min-width: 180px;
   cursor: default;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .status-section {
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .status-section {
+    min-width: 200px;
+    margin-left: 2rem;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .status-section {
+    min-width: 220px;
+    margin-left: 3rem;
+    gap: 1.25rem;
+  }
 }
 
 .status-label {
@@ -744,6 +945,19 @@ onUnmounted(() => {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  margin-bottom: 0;
+}
+
+@media (min-width: 1200px) {
+  .status-label {
+    margin-bottom: 0.25rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .status-label {
+    margin-bottom: 0.5rem;
+  }
 }
 
 .status-select {
@@ -762,6 +976,25 @@ onUnmounted(() => {
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(135, 206, 235, 0.2);
   appearance: none;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 1024px) {
+  .status-select {
+    margin-top: 0.75rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .status-select {
+    margin-top: 1rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .status-select {
+    margin-top: 1.25rem;
+  }
 }
 
 .status-select:hover {
@@ -1064,6 +1297,108 @@ onUnmounted(() => {
   width: 14px;
   height: 14px;
   color: #94a3b8;
+}
+
+.rating-display {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.rating-section {
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(135, 206, 235, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.rating-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rating-label {
+  color: #87CEEB;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rating-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.rating-input {
+  flex: 0 0 120px;
+  padding: 0.75rem 1rem;
+  border: 2px solid rgba(135, 206, 235, 0.3);
+  border-radius: 8px;
+  background: rgba(26, 26, 26, 0.8);
+  color: #b8dce8;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.rating-input:focus {
+  outline: none;
+  border-color: #87CEEB;
+  box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.2);
+}
+
+.rating-input::placeholder {
+  color: #6b7280;
+}
+
+.save-rating-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #87CEEB 0%, #6bb6d6 100%);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(135, 206, 235, 0.3);
+}
+
+.save-rating-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6bb6d6 0%, #87CEEB 100%);
+  box-shadow: 0 6px 16px rgba(135, 206, 235, 0.4);
+  transform: translateY(-2px);
+}
+
+.save-rating-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.rating-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(135, 206, 235, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(135, 206, 235, 0.2);
+}
+
+.rating-stars {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.rating-value {
+  color: #87CEEB;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 /* Responsive Design */

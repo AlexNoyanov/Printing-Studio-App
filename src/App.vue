@@ -202,7 +202,7 @@ body {
 }
 
 .logo-image {
-  height: 50px;
+  height: 34px;
   width: auto;
   object-fit: contain;
   transition: transform 0.3s ease;
@@ -332,7 +332,7 @@ body {
   }
 
   .logo-image {
-    height: 45px;
+    height: 30px;
   }
 
   .nav-links {
@@ -369,7 +369,7 @@ body {
   }
 
   .logo-image {
-    height: 40px;
+    height: 26px;
   }
 
   .nav-links {
@@ -400,7 +400,7 @@ body {
   }
 
   .logo-image {
-    height: 35px;
+    height: 24px;
   }
 
   .nav-links {

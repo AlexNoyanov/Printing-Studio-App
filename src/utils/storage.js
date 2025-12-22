@@ -96,6 +96,49 @@ export const storage = {
     }
   },
 
+  async getUser(userId) {
+    try {
+      // Use query parameter format for consistency
+      const result = await apiCall(`/users.php?id=${userId}`)
+      return result
+    } catch (e) {
+      console.error('Error getting user:', e)
+      throw e
+    }
+  },
+
+  async updateUserRating(userId, rating) {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required')
+      }
+      
+      const endpoint = `/users.php?id=${encodeURIComponent(userId)}`
+      console.log('Updating user rating:', { userId, rating, endpoint })
+      
+      // Use query parameter format - ensure Content-Type header is set
+      const result = await apiCall(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rating: parseFloat(rating) })
+      })
+      
+      console.log('Rating update successful:', result)
+      return result
+    } catch (e) {
+      console.error('Error updating user rating:', e)
+      console.error('Details:', {
+        userId,
+        rating,
+        error: e.message,
+        stack: e.stack
+      })
+      throw e
+    }
+  },
+
   // Orders storage
   async getOrders(userId = null) {
     try {
