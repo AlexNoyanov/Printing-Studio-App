@@ -1,32 +1,32 @@
 <template>
   <div class="auth-container">
     <div class="auth-card">
-      <h1>Login</h1>
+      <h1>{{ t('login') }}</h1>
       <form @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
-          <label for="email">Username or Email</label>
+          <label for="email">{{ t('usernameOrEmail') }}</label>
           <input
             id="email"
             v-model="email"
             type="text"
             required
-            placeholder="Enter your username or email"
+            :placeholder="t('enterUsernameOrEmail')"
           />
         </div>
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="password">{{ t('password') }}</label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
-            placeholder="Enter your password"
+            :placeholder="t('enterPassword')"
           />
         </div>
         <div v-if="error" class="error-message">{{ error }}</div>
-        <button type="submit" class="submit-btn">Login</button>
+        <button type="submit" class="submit-btn">{{ t('loginButton') }}</button>
         <p class="auth-link">
-          Don't have an account? <router-link to="/register">Register</router-link>
+          {{ t('noAccount') }} <router-link to="/register">{{ t('register') }}</router-link>
         </p>
       </form>
     </div>
@@ -34,9 +34,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { storage } from '../utils/storage'
+import { t, setUserLanguage } from '../utils/i18n'
 
 const router = useRouter()
 const email = ref('')
@@ -56,12 +57,20 @@ const handleLogin = async () => {
     )
     
     if (user) {
-      localStorage.setItem('currentUser', JSON.stringify({
+      // Save user data including language preference
+      const userData = {
         id: user.id,
         email: user.email,
         username: user.username,
-        role: user.role
-      }))
+        role: user.role,
+        language: user.language || 'en'
+      }
+      localStorage.setItem('currentUser', JSON.stringify(userData))
+      
+      // Set language preference if user has one
+      if (user.language) {
+        setUserLanguage(user.language)
+      }
       
       if (user.role === 'printer') {
         router.push('/dashboard')
@@ -69,10 +78,10 @@ const handleLogin = async () => {
         router.push('/orders')
       }
     } else {
-      error.value = 'Invalid username/email or password'
+      error.value = t('invalidCredentials')
     }
   } catch (e) {
-    error.value = 'Failed to connect to server. Please try again.'
+    error.value = t('connectionError')
     console.error('Login error:', e)
   }
 }

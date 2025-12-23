@@ -1,5 +1,17 @@
 <template>
   <div id="app">
+    <!-- Language selector - always visible -->
+    <div class="language-selector-container">
+      <select 
+        :value="currentLanguage" 
+        @change="handleLanguageChange" 
+        class="language-selector"
+      >
+        <option value="en">🇬🇧 English</option>
+        <option value="ru">🇷🇺 Русский</option>
+      </select>
+    </div>
+    
     <nav v-if="isAuthenticated" class="navbar">
       <div class="nav-container">
         <div class="logo-section">
@@ -25,11 +37,120 @@
 import { computed, watch, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storage } from './utils/storage'
+import { getLanguage, setUserLanguage, getBrowserLanguage, getUserLanguage, getSavedLanguage, setCurrentLanguage, initCurrentLanguage } from './utils/i18n'
 import logoImage from './logos/logo-black-small.png'
 
 const router = useRouter()
 const hasUserFilaments = ref(false)
 const hasPrinterFilaments = ref(false)
+
+// Initialize language system
+initCurrentLanguage()
+
+// Get initial language
+const getInitialLanguage = () => {
+  const savedLang = getSavedLanguage()
+  if (savedLang && (savedLang === 'en' || savedLang === 'ru')) {
+    return savedLang
+  }
+  
+  const userLang = getUserLanguage()
+  if (userLang && (userLang === 'en' || userLang === 'ru')) {
+    return userLang
+  }
+  
+  const browserLang = getBrowserLanguage()
+  return browserLang === 'ru' ? 'ru' : 'en'
+}
+
+const currentLanguage = ref(getInitialLanguage())
+
+// Load user language preference on mount and when authentication changes
+const loadLanguagePreference = () => {
+  // Check saved language first (persists after logout)
+  const savedLang = getSavedLanguage()
+  if (savedLang && (savedLang === 'en' || savedLang === 'ru')) {
+    currentLanguage.value = savedLang
+    return
+  }
+  
+  // Then check user account language
+  const userLang = getUserLanguage()
+  if (userLang && (userLang === 'en' || userLang === 'ru')) {
+    currentLanguage.value = userLang
+    setUserLanguage(userLang)
+    return
+  }
+  
+  // Fallback to browser language
+  const browserLang = getBrowserLanguage()
+  currentLanguage.value = browserLang === 'ru' ? 'ru' : 'en'
+  setUserLanguage(currentLanguage.value)
+}
+
+// Handle language change
+const handleLanguageChange = async (event) => {
+  const newLanguage = event?.target?.value || currentLanguage.value
+  console.log('Language changed to:', newLanguage)
+  
+  // Update the reactive ref
+  currentLanguage.value = newLanguage
+  
+  // Update the language state immediately
+  setCurrentLanguage(newLanguage)
+  setUserLanguage(newLanguage)
+  
+  // If user is logged in, update language in database
+  if (isAuthenticated.value) {
+    try {
+      const userStr = localStorage.getItem('currentUser')
+      if (userStr) {
+        const userData = JSON.parse(userStr)
+        
+        // Update user language via API
+        const API_BASE = import.meta.env.VITE_API_BASE || (() => {
+          if (window.location.hostname.includes('web.app') || window.location.hostname.includes('firebaseapp.com')) {
+            return 'https://noyanov.com/Apps/Printing/api'
+          }
+          return import.meta.env.DEV ? 'https://noyanov.com/Apps/Printing/api' : '/Apps/Printing/api'
+        })()
+        
+        try {
+          const response = await fetch(`${API_BASE}/users.php?id=${userData.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: newLanguage })
+          })
+          if (!response.ok) {
+            console.warn('Failed to update language in database, but continuing')
+          }
+        } catch (e) {
+          console.error('Failed to update language in database:', e)
+          // Continue anyway - language is saved in localStorage
+        }
+        
+        // Update local storage
+        userData.language = newLanguage
+        localStorage.setItem('currentUser', JSON.stringify(userData))
+      }
+    } catch (e) {
+      console.error('Error updating user language:', e)
+      // Still update local storage even if API call fails
+      const userStr = localStorage.getItem('currentUser')
+      if (userStr) {
+        const userData = JSON.parse(userStr)
+        userData.language = newLanguage
+        localStorage.setItem('currentUser', JSON.stringify(userData))
+      }
+    }
+  }
+  
+  // Reload page to apply language changes to all components
+  // Use a small delay to ensure state is saved
+  setTimeout(() => {
+    window.location.reload()
+  }, 50)
+}
 
 const isAuthenticated = computed(() => {
   return localStorage.getItem('currentUser') !== null
@@ -122,10 +243,12 @@ watch([appTitle, isAuthenticated], ([title, authenticated]) => {
     document.title = title
     checkUserFilaments()
     checkPrinterFilaments()
+    loadLanguagePreference()
   } else {
     document.title = '3D Printing Studio'
     hasUserFilaments.value = false
     hasPrinterFilaments.value = false
+    loadLanguagePreference()
   }
 }, { immediate: true })
 
@@ -141,6 +264,8 @@ watch(() => router.currentRoute.value.path, () => {
 })
 
 onMounted(() => {
+  loadLanguagePreference()
+  
   if (isAuthenticated.value) {
     if (userRole.value === 'user') {
       checkUserFilaments()
@@ -151,6 +276,7 @@ onMounted(() => {
 })
 
 const logout = () => {
+  // Keep language preference even after logout (it's stored separately)
   localStorage.removeItem('currentUser')
   router.push('/login')
 }
@@ -161,6 +287,49 @@ const logout = () => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+.language-selector-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid rgba(135, 206, 235, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.language-selector {
+  background: #1a1a1a;
+  color: #b8dce8;
+  border: 1px solid rgba(135, 206, 235, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.language-selector:hover {
+  border-color: rgba(135, 206, 235, 0.6);
+  background: #2a2a2a;
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.2);
+}
+
+.language-selector:focus {
+  border-color: #87CEEB;
+  box-shadow: 0 0 15px rgba(135, 206, 235, 0.4);
+}
+
+.language-selector option {
+  background: #1a1a1a;
+  color: #b8dce8;
+  padding: 0.5rem;
 }
 
 body {

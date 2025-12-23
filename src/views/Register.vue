@@ -1,66 +1,66 @@
 <template>
   <div class="auth-container">
     <div class="auth-card">
-      <h1>Register</h1>
+      <h1>{{ t('registerTitle') }}</h1>
       <form @submit.prevent="handleRegister" class="auth-form">
         <div class="form-group">
-          <label for="username">Username</label>
+          <label for="username">{{ t('username') }}</label>
           <input
             id="username"
             v-model="username"
             type="text"
             required
-            placeholder="Enter your username"
+            :placeholder="t('enterUsername')"
           />
         </div>
         <div class="form-group">
-          <label for="email">Email</label>
+          <label for="email">{{ t('email') }}</label>
           <input
             id="email"
             v-model="email"
             type="email"
             required
-            placeholder="Enter your email"
+            :placeholder="t('enterEmail')"
           />
         </div>
         <div class="form-group">
-          <label for="password">Password</label>
+          <label for="password">{{ t('password') }}</label>
           <input
             id="password"
             v-model="password"
             type="password"
             required
-            placeholder="Enter your password"
+            :placeholder="t('enterPassword')"
             minlength="6"
           />
         </div>
         <div class="form-group">
-          <label for="role">Account Type</label>
+          <label for="role">{{ t('accountType') }}</label>
           <select id="role" v-model="role" required class="role-select">
-            <option value="user">Regular User</option>
-            <option value="printer">Printer Owner</option>
+            <option value="user">{{ t('regularUser') }}</option>
+            <option value="printer">{{ t('printerOwner') }}</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="language">Language</label>
+          <label for="language">{{ t('language') }}</label>
           <select id="language" v-model="language" required class="role-select">
-            <option value="en">English</option>
-            <option value="ru">Russian</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="it">Italian</option>
-            <option value="pt">Portuguese</option>
-            <option value="zh">Chinese</option>
-            <option value="ja">Japanese</option>
-            <option value="ko">Korean</option>
+            <option value="en">{{ t('english') }}</option>
+            <option value="ru">{{ t('russian') }}</option>
+            <option value="es">{{ t('spanish') }}</option>
+            <option value="fr">{{ t('french') }}</option>
+            <option value="de">{{ t('german') }}</option>
+            <option value="it">{{ t('italian') }}</option>
+            <option value="pt">{{ t('portuguese') }}</option>
+            <option value="zh">{{ t('chinese') }}</option>
+            <option value="ja">{{ t('japanese') }}</option>
+            <option value="ko">{{ t('korean') }}</option>
           </select>
         </div>
         <div v-if="error" class="error-message">{{ error }}</div>
         <div v-if="success" class="success-message">{{ success }}</div>
-        <button type="submit" class="submit-btn">Register</button>
+        <button type="submit" class="submit-btn">{{ t('registerButton') }}</button>
         <p class="auth-link">
-          Already have an account? <router-link to="/login">Login</router-link>
+          {{ t('alreadyHaveAccount') }} <router-link to="/login">{{ t('login') }}</router-link>
         </p>
       </form>
     </div>
@@ -68,9 +68,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storage } from '../utils/storage'
+import { t, getBrowserLanguage, setUserLanguage } from '../utils/i18n'
 
 const router = useRouter()
 const username = ref('')
@@ -80,6 +81,15 @@ const role = ref('user')
 const language = ref('en') // Default to English
 const error = ref('')
 const success = ref('')
+
+// Set language based on browser language on mount
+onMounted(() => {
+  const browserLang = getBrowserLanguage()
+  if (browserLang && browserLang !== 'en') {
+    language.value = browserLang
+    setUserLanguage(browserLang)
+  }
+})
 
 const handleRegister = async () => {
   error.value = ''
@@ -98,7 +108,10 @@ const handleRegister = async () => {
     
     await storage.createUser(newUser)
     
-    success.value = 'Registration successful! Redirecting to login...'
+    // Set language preference for the new user
+    setUserLanguage(language.value)
+    
+    success.value = t('registrationSuccessful')
     
     setTimeout(() => {
       router.push('/login')
@@ -106,11 +119,11 @@ const handleRegister = async () => {
   } catch (e) {
     // Handle specific error messages from backend
     if (e.message && e.message.includes('already exists')) {
-      error.value = 'Email or username already registered'
+      error.value = t('emailOrUsernameExists')
     } else if (e.message && e.message.includes('409')) {
-      error.value = 'Email or username already registered'
+      error.value = t('emailOrUsernameExists')
     } else {
-      error.value = 'Registration failed: ' + (e.message || 'Please try again.')
+      error.value = t('registrationFailed') + ': ' + (e.message || t('pleaseTryAgain'))
     }
     console.error('Registration error:', e)
   }
