@@ -337,6 +337,19 @@ const filteredOrders = computed(() => {
   }
   
   return filtered.sort((a, b) => {
+    // Show active orders (not "Done") first
+    const aIsDone = a.status === 'Done'
+    const bIsDone = b.status === 'Done'
+    
+    // If one is done and the other isn't, active order comes first
+    if (aIsDone && !bIsDone) {
+      return 1 // b (active) comes before a (done)
+    }
+    if (!aIsDone && bIsDone) {
+      return -1 // a (active) comes before b (done)
+    }
+    
+    // If both have same completion status, sort by creation date (newest first)
     return new Date(b.createdAt) - new Date(a.createdAt)
   })
 })
