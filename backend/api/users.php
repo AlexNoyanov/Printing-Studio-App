@@ -45,7 +45,7 @@ try {
         case 'GET':
             if ($userId) {
                 // Get single user
-                $stmt = $pdo->prepare("SELECT id, username, email, password, role, rating, rating_count, created_at, updated_at FROM users WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT id, username, email, password, role, language, rating, rating_count, created_at, updated_at FROM users WHERE id = ?");
                 $stmt->execute([$userId]);
                 $user = $stmt->fetch();
                 
@@ -59,6 +59,7 @@ try {
                     'email' => $user['email'],
                     'password' => $user['password'],
                     'role' => $user['role'],
+                    'language' => $user['language'] ?? 'en',
                     'rating' => $user['rating'] !== null ? floatval($user['rating']) : null,
                     'ratingCount' => intval($user['rating_count'] ?? 0),
                     'createdAt' => $user['created_at'],
@@ -66,7 +67,7 @@ try {
                 ]);
             } else {
                 // Get all users
-                $stmt = $pdo->query("SELECT id, username, email, password, role, rating, rating_count, created_at, updated_at FROM users ORDER BY created_at DESC");
+                $stmt = $pdo->query("SELECT id, username, email, password, role, language, rating, rating_count, created_at, updated_at FROM users ORDER BY created_at DESC");
                 $users = $stmt->fetchAll();
                 
                 $result = array_map(function($user) {
@@ -76,6 +77,7 @@ try {
                         'email' => $user['email'],
                         'password' => $user['password'],
                         'role' => $user['role'],
+                        'language' => $user['language'] ?? 'en',
                         'rating' => $user['rating'] !== null ? floatval($user['rating']) : null,
                         'ratingCount' => intval($user['rating_count'] ?? 0),
                         'createdAt' => $user['created_at'],
@@ -111,13 +113,14 @@ try {
             
             // Create new user
             try {
-                $stmt = $pdo->prepare("INSERT INTO users (id, username, email, password, role) VALUES (?, ?, ?, ?, ?)");
+                $stmt = $pdo->prepare("INSERT INTO users (id, username, email, password, role, language) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $data['id'],
                     $data['username'],
                     $data['email'],
                     $data['password'],
-                    $data['role'] ?? 'user'
+                    $data['role'] ?? 'user',
+                    $data['language'] ?? 'en' // Default to English
                 ]);
                 
                 sendJSON(['success' => true, 'id' => $data['id']], 201);
@@ -164,6 +167,10 @@ try {
             if (isset($data['role'])) {
                 $updates[] = 'role = ?';
                 $values[] = $data['role'];
+            }
+            if (isset($data['language'])) {
+                $updates[] = 'language = ?';
+                $values[] = $data['language'];
             }
             if (isset($data['rating'])) {
                 $rating = floatval($data['rating']);

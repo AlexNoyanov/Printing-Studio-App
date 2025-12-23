@@ -41,6 +41,21 @@
             <option value="printer">Printer Owner</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="language">Language</label>
+          <select id="language" v-model="language" required class="role-select">
+            <option value="en">English</option>
+            <option value="ru">Russian</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+          </select>
+        </div>
         <div v-if="error" class="error-message">{{ error }}</div>
         <div v-if="success" class="success-message">{{ success }}</div>
         <button type="submit" class="submit-btn">Register</button>
@@ -62,6 +77,7 @@ const username = ref('')
 const email = ref('')
 const password = ref('')
 const role = ref('user')
+const language = ref('en') // Default to English
 const error = ref('')
 const success = ref('')
 
@@ -76,7 +92,8 @@ const handleRegister = async () => {
       username: username.value,
       email: email.value,
       password: password.value,
-      role: role.value
+      role: role.value,
+      language: language.value || 'en' // Default to English if not set
     }
     
     await storage.createUser(newUser)
