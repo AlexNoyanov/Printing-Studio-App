@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:russian": "vite --config vite.config.russian.dev.js",
     "build": "vite build",
     "build:firebase": "vite build --config vite.config.firebase.js",
     "build:production": "vite build --config vite.config.production.js",
