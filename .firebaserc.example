@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "your-default-project-id",
+    "production": "your-production-project-id",
+    "russian": "your-russian-project-id"
+  }
+}
+

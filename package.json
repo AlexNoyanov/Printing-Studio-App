@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:firebase": "vite build --config vite.config.firebase.js",
+    "build:production": "vite build --config vite.config.production.js",
     "preview": "vite preview",
     "server": "node backend/server.js",
     "server:dev": "node --watch backend/server.js",
@@ -14,7 +15,11 @@
     "makerworld-fetcher:dev": "node --watch backend/makerworld-fetcher.js",
     "db:init": "echo 'Please run: mysql -h YOUR_HOST -u YOUR_USER -pYOUR_PASSWORD YOUR_DATABASE < database/schema.sql'",
     "deploy": "npm run build && firebase deploy --only hosting",
-    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting"
+    "deploy:firebase": "npm run build:firebase && firebase deploy --only hosting",
+    "deploy:production": "bash scripts/deploy-production.sh",
+    "deploy:russian": "bash scripts/deploy-russian.sh",
+    "switch:production": "firebase use production && cp firebase.json.production firebase.json",
+    "switch:russian": "firebase use russian && cp firebase.json.russian firebase.json"
   },
   "dependencies": {
     "vue": "^3.4.0",

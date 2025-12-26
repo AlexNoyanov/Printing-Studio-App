@@ -1,6 +1,9 @@
 // Internationalization utility
 // Supports multiple languages with fallback to English
 
+// Cache for current language state
+let currentLanguageState = null
+
 const translations = {
   en: {
     // Login page
@@ -200,6 +203,19 @@ export function getSavedLanguage() {
 // Get current language code
 export function getLanguage() {
   return getCurrentLanguage()
+}
+
+// Set current language (updates cache)
+export function setCurrentLanguage(language) {
+  if (translations[language]) {
+    currentLanguageState = language
+    setUserLanguage(language)
+  }
+}
+
+// Initialize current language (loads from saved preference or browser)
+export function initCurrentLanguage() {
+  currentLanguageState = getCurrentLanguage()
 }
 
 export default {

@@ -24,7 +24,15 @@ data/
 # Security incident files
 SECURITY_INCIDENT.md
 
-# Firebase (optional - can be included if you want)
-# .firebaserc
-# firebase.json
+# Firebase configuration files with sensitive data
+# These files contain API keys and project IDs - DO NOT COMMIT
+.firebaserc
+firebase.json
+firebase-config.js
+firebase-config.production.js
+firebase-config.russian.js
+.firebase/
 
+# Firebase project-specific configs (if they exist)
+firebase.json.production
+firebase.json.russian

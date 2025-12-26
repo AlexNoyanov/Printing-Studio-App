@@ -1,6 +1,8 @@
 {
   "projects": {
-    "default": "printing-studio-app-4e0e6"
+    "default": "d-print-electrozavodskaya",
+    "production": "printing-studio-app-4e0e6",
+    "russian": "d-print-electrozavodskaya"
   }
 }
 
