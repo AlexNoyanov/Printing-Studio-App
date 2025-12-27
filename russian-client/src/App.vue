@@ -105,8 +105,8 @@ body {
 
 /* Navbar */
 .navbar {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -140,7 +140,7 @@ body {
 
 .nav-links a {
   text-decoration: none;
-  color: #333;
+  color: #ffffff;
   font-weight: 500;
   transition: color 0.3s ease;
 }
@@ -152,16 +152,17 @@ body {
 
 .logout-btn {
   padding: 0.5rem 1rem;
-  background: #f0f0f0;
+  background: #333333;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
+  color: #ffffff;
   transition: background 0.3s ease;
 }
 
 .logout-btn:hover {
-  background: #e0e0e0;
+  background: #555555;
 }
 
 /* Responsive */
