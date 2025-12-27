@@ -8,15 +8,11 @@ import FilamentsList from '../views/FilamentsList.vue'
 import Filaments from '../views/Filaments.vue'
 import YourFilaments from '../views/YourFilaments.vue'
 import Shop from '../views/Shop.vue'
-import ClientLogin from '../views/ClientLogin.vue'
-import ClientRegister from '../views/ClientRegister.vue'
-import ClientHome from '../views/ClientHome.vue'
-import ClientCreateOrder from '../views/ClientCreateOrder.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/client-login'
+    redirect: '/login'
   },
   {
     path: '/login',
@@ -27,28 +23,6 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
-  },
-  {
-    path: '/client-login',
-    name: 'ClientLogin',
-    component: ClientLogin
-  },
-  {
-    path: '/client-register',
-    name: 'ClientRegister',
-    component: ClientRegister
-  },
-  {
-    path: '/client-home',
-    name: 'ClientHome',
-    component: ClientHome,
-    meta: { requiresAuth: true, requiresRole: 'user' }
-  },
-  {
-    path: '/client-create-order',
-    name: 'ClientCreateOrder',
-    component: ClientCreateOrder,
-    meta: { requiresAuth: true, requiresRole: 'user' }
   },
   {
     path: '/create-order',
@@ -106,12 +80,7 @@ router.beforeEach((to, from, next) => {
   const currentUser = localStorage.getItem('currentUser')
   
   if (to.meta.requiresAuth && !currentUser) {
-    // Redirect to client login for client pages, regular login for others
-    if (to.path.startsWith('/client-')) {
-      next('/client-login')
-    } else {
-      next('/login')
-    }
+    next('/login')
     return
   }
   
@@ -123,21 +92,16 @@ router.beforeEach((to, from, next) => {
       if (requiredRole && userData.role !== requiredRole) {
         // Redirect based on role
         if (userData.role === 'user') {
-          // Redirect to client home for client pages
-          if (to.path.startsWith('/client-')) {
-            next('/client-home')
-          } else {
-            next('/orders')
-          }
+          next('/orders')
         } else if (userData.role === 'printer') {
           next('/dashboard')
         } else {
-          next('/client-login')
+          next('/login')
         }
         return
       }
     } catch (e) {
-      next('/client-login')
+      next('/login')
       return
     }
   }
