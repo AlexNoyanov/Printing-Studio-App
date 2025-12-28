@@ -1,17 +1,24 @@
 <template>
   <div id="app">
-    <nav v-if="isAuthenticated" class="navbar">
+    <nav class="navbar" :class="{ authenticated: isAuthenticated || isAuthPage }">
       <div class="nav-container">
         <div class="logo-section">
           <img :src="logoImage" alt="Logo" class="logo-image" />
         </div>
         <div class="nav-links">
-          <router-link to="/home" v-if="userRole === 'user'">Главная</router-link>
-          <router-link to="/orders" v-if="userRole === 'user'">Мои заказы</router-link>
-          <router-link to="/create-order" v-if="userRole === 'user'">Создать заказ</router-link>
-          <button @click="logout" class="logout-btn">
-            {{ currentUsername ? `${currentUsername}, Выход` : 'Выход' }}
-          </button>
+          <template v-if="isAuthenticated">
+            <router-link to="/home" v-if="userRole === 'user'">Главная</router-link>
+            <router-link to="/orders" v-if="userRole === 'user'">Мои заказы</router-link>
+            <router-link to="/create-order" v-if="userRole === 'user'">Создать заказ</router-link>
+            <button @click="logout" class="logout-btn">
+              {{ currentUsername ? `${currentUsername}, Выход` : 'Выход' }}
+            </button>
+          </template>
+          <template v-else>
+            <router-link to="/" class="nav-link">Главная</router-link>
+            <router-link to="/login" class="login-btn">Войти</router-link>
+            <router-link to="/register" class="register-btn">Регистрация</router-link>
+          </template>
         </div>
       </div>
     </nav>
@@ -21,12 +28,13 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { storage } from './utils/storage'
 import { setCurrentLanguage, setUserLanguage } from './utils/i18n'
-import logoImage from './logos/logo-black-small.png'
+import logoImage from './logos/p1s-printer.png'
 
 const router = useRouter()
+const route = useRoute()
 
 // Force Russian language
 setCurrentLanguage('ru')
@@ -45,6 +53,11 @@ const userRole = computed(() => {
 
 const currentUsername = computed(() => {
   return currentUser.value?.username || null
+})
+
+// Check if we're on login or register page - make header black
+const isAuthPage = computed(() => {
+  return route.path === '/login' || route.path === '/register'
 })
 
 // Load user from localStorage
@@ -105,11 +118,19 @@ body {
 
 /* Navbar */
 .navbar {
-  background: #000000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
   z-index: 1000;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.navbar.authenticated {
+  background: #000000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border-bottom: none;
 }
 
 .nav-container {
@@ -140,13 +161,29 @@ body {
 
 .nav-links a {
   text-decoration: none;
-  color: #ffffff;
   font-weight: 500;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
-.nav-links a:hover,
-.nav-links a.router-link-active {
+.navbar:not(.authenticated) .nav-links a {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.navbar:not(.authenticated) .nav-links a:hover,
+.navbar:not(.authenticated) .nav-links a.router-link-active {
+  color: #667eea;
+}
+
+.navbar.authenticated .nav-links a {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.navbar.authenticated .nav-links a:hover,
+.navbar.authenticated .nav-links a.router-link-active {
   color: #667eea;
 }
 
@@ -163,6 +200,88 @@ body {
 
 .logout-btn:hover {
   background: #555555;
+}
+
+.nav-link {
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  color: #2d3748;
+  letter-spacing: 0.3px;
+}
+
+.navbar:not(.authenticated) .nav-link:hover,
+.navbar:not(.authenticated) .nav-link.router-link-active {
+  color: #667eea;
+}
+
+.login-btn {
+  padding: 0.65rem 2rem;
+  background: transparent;
+  border: 2px solid #764ba2;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #764ba2;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+  letter-spacing: 0.3px;
+}
+
+.login-btn:hover {
+  background: rgba(118, 75, 162, 0.1);
+  border-color: #8b5fb8;
+  color: #8b5fb8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(118, 75, 162, 0.25);
+}
+
+.register-btn {
+  padding: 0.65rem 1.75rem;
+  background: transparent;
+  border: 2px solid rgba(102, 126, 234, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #667eea;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  letter-spacing: 0.3px;
+}
+
+.navbar:not(.authenticated) .register-btn:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: rgba(102, 126, 234, 0.6);
+  color: #667eea;
+  transform: translateY(-2px);
+}
+
+.navbar.authenticated .register-btn {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.navbar.authenticated .register-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.logo-image {
+  height: 42px;
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.navbar:not(.authenticated) .logo-image {
+  filter: brightness(0.9);
+}
+
+.logo-section a:hover .logo-image {
+  transform: scale(1.05);
 }
 
 /* Responsive */

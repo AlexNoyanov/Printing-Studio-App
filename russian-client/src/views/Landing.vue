@@ -2,12 +2,15 @@
   <div class="landing-page">
     <!-- Hero Section -->
     <section class="hero-section">
+      <div class="hero-image-container">
+        <img :src="printerImage" alt="3D Printer" class="hero-printer-image" />
+      </div>
       <div class="hero-content">
         <h1 class="hero-title">Студия 3D-печати</h1>
         <p class="hero-subtitle">Превращаем ваши идеи в реальность</p>
         <div class="hero-actions">
           <router-link to="/register" class="cta-button primary">
-            Начать работу
+            Регистрация
           </router-link>
           <router-link to="/login" class="cta-button secondary">
             Войти
@@ -26,27 +29,23 @@
             из различных материалов. Наша команда имеет многолетний опыт работы с современным оборудованием 
             и использует только проверенные материалы для достижения лучших результатов.
           </p>
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon">🎯</div>
-              <h3>Профессионализм</h3>
-              <p>Опытная команда с многолетним опытом в 3D-печати</p>
+          <h3 class="materials-title" v-if="materials.length > 0">Материалы в наличии</h3>
+          <div class="materials-grid" v-if="materials.length > 0">
+            <div 
+              v-for="material in materials" 
+              :key="material.id" 
+              class="material-card"
+            >
+              <div 
+                class="material-color" 
+                :style="{ backgroundColor: material.color || '#cccccc' }"
+              ></div>
+              <h3>{{ material.name }}</h3>
+              <p v-if="material.materialType">{{ material.materialType }}</p>
             </div>
-            <div class="feature-card">
-              <div class="feature-icon">⚡</div>
-              <h3>Скорость</h3>
-              <p>Быстрое выполнение заказов без потери качества</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">🎨</div>
-              <h3>Разнообразие</h3>
-              <p>Широкий выбор материалов и цветов</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">💎</div>
-              <h3>Качество</h3>
-              <p>Высокое качество печати и точность деталей</p>
-            </div>
+          </div>
+          <div v-else class="loading-materials">
+            <p>Загрузка материалов...</p>
           </div>
         </div>
       </div>
@@ -112,9 +111,7 @@
         </div>
         <div class="contact-info">
           <h3>Контакты</h3>
-          <p>📧 Email: info@print-studio.ru</p>
-          <p>📱 Телефон: +7 (999) 123-45-67</p>
-          <p>💬 Telegram: @print_studio</p>
+          <p>📍 м. Электрозаводская</p>
         </div>
       </div>
     </section>
@@ -133,21 +130,59 @@
 </template>
 
 <script setup>
-// Landing page component - no logic needed
+import { ref, onMounted } from 'vue'
+import { storage } from '../utils/storage'
+import printerImage from '../logos/p1s-acting.webp'
+
+const materials = ref([])
+
+const loadMaterials = async () => {
+  try {
+    // Load all materials (no userId filter to show all available materials)
+    const allMaterials = await storage.getMaterials()
+    materials.value = allMaterials || []
+  } catch (e) {
+    console.error('Error loading materials:', e)
+    materials.value = []
+  }
+}
+
+onMounted(() => {
+  loadMaterials()
+})
 </script>
 
 <style scoped>
 .landing-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9b7fd9 0%, #6b5aa8 50%, #4a3d7a 100%);
 }
 
 /* Hero Section */
 .hero-section {
-  padding: 120px 20px 80px;
+  padding: 60px 20px 80px;
   text-align: center;
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #9b7fd9 0%, #6b5aa8 50%, #4a3d7a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.hero-image-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.hero-printer-image {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  object-fit: contain;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .hero-content {
@@ -189,23 +224,26 @@
 
 .cta-button.primary {
   background: white;
-  color: #667eea;
+  color: #4a90e2;
+  border: 2px solid #4a90e2;
 }
 
 .cta-button.primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: #f0f7ff;
 }
 
 .cta-button.secondary {
-  background: transparent;
+  background: #764ba2;
   color: white;
-  border-color: white;
+  border: 2px solid white;
 }
 
 .cta-button.secondary:hover {
-  background: white;
-  color: #667eea;
+  background: #8b5fb8;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .cta-button.large {
@@ -247,40 +285,70 @@ section {
   color: #555;
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 3rem;
-}
-
-.feature-card {
+.materials-title {
+  font-size: 2rem;
+  font-weight: 700;
   text-align: center;
-  padding: 2rem;
-  border-radius: 16px;
-  background: #f8f9fa;
-  transition: transform 0.3s ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.feature-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   color: #1a1a1a;
 }
 
-.feature-card p {
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.material-card {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.material-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border-color: #667eea;
+}
+
+.material-color {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  border: 3px solid #e9ecef;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.material-card:hover .material-color {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.material-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.material-card p {
   color: #666;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.loading-materials {
+  text-align: center;
+  padding: 3rem;
+  color: #999;
 }
 
 /* How It Works Section */
