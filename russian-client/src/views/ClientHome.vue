@@ -22,6 +22,7 @@
         </div>
       </div>
       <div class="hero-visual">
+        <img :src="printerImage" alt="3D Printer" class="hero-printer-background" />
         <div class="floating-shapes">
           <div class="shape shape-1"></div>
           <div class="shape shape-2"></div>
@@ -158,6 +159,7 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import printerImage from '../logos/p1s-acting.webp'
 
 onMounted(() => {
   // Smooth scroll animations
@@ -278,6 +280,19 @@ onMounted(() => {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-printer-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.15;
+  filter: blur(2px);
+  z-index: 1;
 }
 
 .floating-shapes {

@@ -7,18 +7,6 @@
     </div>
     
     <div class="login-content">
-      <div class="logo-section">
-        <div class="logo-circle">
-          <svg viewBox="0 0 100 100" class="logo-icon">
-            <path d="M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z" fill="none" stroke="currentColor" stroke-width="3"/>
-            <circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
-            <circle cx="50" cy="50" r="8" fill="currentColor"/>
-          </svg>
-        </div>
-        <h1 class="studio-title">Студия 3D-печати</h1>
-        <p class="studio-subtitle">Профессиональная печать ваших идей</p>
-      </div>
-
       <div class="login-card">
         <div class="card-header">
           <h2>Вход в систему</h2>
@@ -234,50 +222,6 @@ const handleLogin = async () => {
   gap: 2rem;
 }
 
-.logo-section {
-  text-align: center;
-  color: #fff;
-}
-
-.logo-circle {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, rgba(135, 206, 235, 0.2) 0%, rgba(107, 182, 214, 0.1) 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(135, 206, 235, 0.3);
-  box-shadow: 0 0 40px rgba(135, 206, 235, 0.2), inset 0 0 40px rgba(135, 206, 235, 0.1);
-}
-
-.logo-icon {
-  width: 60px;
-  height: 60px;
-  color: #87CEEB;
-  filter: drop-shadow(0 0 10px rgba(135, 206, 235, 0.5));
-}
-
-.studio-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem;
-  background: linear-gradient(135deg, #87CEEB 0%, #a0d4e8 50%, #87CEEB 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 30px rgba(135, 206, 235, 0.3);
-  letter-spacing: -0.5px;
-}
-
-.studio-subtitle {
-  font-size: 1.1rem;
-  color: #a0d4e8;
-  margin: 0;
-  opacity: 0.9;
-}
-
 .login-card {
   background: rgba(26, 26, 42, 0.8);
   backdrop-filter: blur(20px);
@@ -484,10 +428,6 @@ const handleLogin = async () => {
 
   .login-card {
     padding: 2rem 1.5rem;
-  }
-
-  .studio-title {
-    font-size: 2rem;
   }
 
   .features-preview {
