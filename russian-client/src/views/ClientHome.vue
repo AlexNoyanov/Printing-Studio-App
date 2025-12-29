@@ -553,23 +553,142 @@ section {
 
 /* Responsive */
 @media (max-width: 968px) {
+  .hero-section {
+    padding: 3rem 1.5rem;
+    min-height: 70vh;
+  }
+
   .hero-title {
-    font-size: 3rem;
+    font-size: 2.75rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.25rem;
   }
 
   .process-steps {
     flex-direction: column;
+    gap: 2rem;
   }
 
   .step-arrow {
     transform: rotate(90deg);
   }
+  
+  .cta-content h2 {
+    font-size: 2.25rem;
+  }
+  
+  .cta-content p {
+    font-size: 1.1rem;
+  }
 }
 
 @media (max-width: 640px) {
-  .hero-title {
-    font-size: 2.5rem;
+  .hero-section {
+    padding: 2.5rem 1rem;
+    min-height: 60vh;
   }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .cta-button {
+    width: 100%;
+    max-width: 280px;
+    font-size: 0.95rem;
+    padding: 0.875rem 1.5rem;
+  }
+  
+  .process-steps {
+    gap: 1.5rem;
+  }
+  
+  .cta-content h2 {
+    font-size: 2rem;
+  }
+  
+  .cta-content p {
+    font-size: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.875rem;
+  }
+  
+  .container {
+    padding: 2.5rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 2rem 0.875rem;
+    min-height: 55vh;
+  }
+
+  .hero-title {
+    font-size: 1.75rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .cta-button {
+    font-size: 0.9rem;
+    padding: 0.8rem 1.25rem;
+  }
+  
+  .section-title {
+    font-size: 1.625rem;
+  }
+  
+  .container {
+    padding: 2rem 0.875rem;
+  }
+  
+  .step-card {
+    padding: 1.25rem;
+  }
+  
+  .step-number {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .step-card h3 {
+    font-size: 1.25rem;
+  }
+  
+  .step-card p {
+    font-size: 0.95rem;
+  }
+  
+  .cta-section {
+    padding: 3rem 1rem;
+  }
+  
+  .cta-content h2 {
+    font-size: 1.75rem;
+  }
+  
+  .cta-content p {
+    font-size: 0.95rem;
+  }
+}
 
   .hero-subtitle {
     font-size: 1.2rem;

@@ -744,6 +744,16 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
+@media (max-width: 968px) {
+  .form-card {
+    padding: 2rem;
+  }
+  
+  .colors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 1rem;
@@ -754,15 +764,84 @@ onMounted(() => {
   }
 
   .page-header h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+  
+  .form-group label {
+    font-size: 0.95rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 0.95rem;
   }
 
   .colors-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
   }
 
   .form-actions {
     flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.875rem;
+  }
+
+  .form-card {
+    padding: 1.25rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .form-group textarea {
+    min-height: 100px;
+  }
+
+  .colors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.875rem;
+  }
+  
+  .color-option {
+    padding: 1rem;
+  }
+  
+  .color-preview {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .form-actions button {
+    padding: 0.875rem;
+    font-size: 0.95rem;
   }
 }
 </style>

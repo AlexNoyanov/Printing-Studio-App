@@ -285,15 +285,111 @@ body {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .nav-container {
-    padding: 1rem;
-    flex-wrap: wrap;
+    padding: 0.875rem 1.5rem;
   }
   
   .nav-links {
-    gap: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .login-btn,
+  .register-btn {
+    padding: 0.6rem 1.5rem;
     font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .logo-image {
+    height: 36px;
+  }
+  
+  .nav-links {
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .nav-links a {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .login-btn,
+  .register-btn {
+    padding: 0.55rem 1.25rem;
+    font-size: 0.85rem;
+  }
+  
+  .logout-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-container {
+    padding: 0.75rem 0.875rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .logo-section {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .logo-image {
+    height: 32px;
+  }
+  
+  .nav-links {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  
+  .nav-links a {
+    flex: 1;
+    text-align: center;
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8rem;
+    min-width: 0;
+  }
+  
+  .login-btn,
+  .register-btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .logout-btn {
+    width: 100%;
+    padding: 0.625rem;
+    font-size: 0.85rem;
+  }
+  
+  .navbar:not(.authenticated) .nav-links {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .navbar:not(.authenticated) .login-btn,
+  .navbar:not(.authenticated) .register-btn {
+    width: 100%;
   }
 }
 </style>

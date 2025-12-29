@@ -470,6 +470,12 @@ const handleRegister = async () => {
   text-decoration: underline;
 }
 
+@media (max-width: 968px) {
+  .register-card {
+    max-width: 500px;
+  }
+}
+
 @media (max-width: 640px) {
   .client-register-container {
     padding: 1rem;
@@ -479,8 +485,67 @@ const handleRegister = async () => {
     padding: 2rem 1.5rem;
   }
 
+  .card-header h2 {
+    font-size: 1.75rem;
+  }
+  
   .studio-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .form-group input {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .submit-btn {
+    padding: 0.875rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .client-register-container {
+    padding: 0.75rem;
+  }
+
+  .register-card {
+    padding: 1.75rem 1.25rem;
+  }
+  
+  .card-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .studio-title {
+    font-size: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-group input {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .submit-btn {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
+  
+  .login-link {
+    font-size: 0.9rem;
   }
 }
 </style>

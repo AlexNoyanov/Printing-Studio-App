@@ -421,13 +421,39 @@ const handleLogin = async () => {
   font-weight: 500;
 }
 
+@media (max-width: 968px) {
+  .login-content {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .login-card {
+    width: 100%;
+    max-width: 450px;
+  }
+  
+  .features-preview {
+    width: 100%;
+    max-width: 450px;
+  }
+}
+
 @media (max-width: 640px) {
   .client-login-container {
     padding: 1rem;
+    min-height: 100vh;
   }
 
   .login-card {
     padding: 2rem 1.5rem;
+  }
+  
+  .card-header h2 {
+    font-size: 1.75rem;
+  }
+  
+  .card-header p {
+    font-size: 0.95rem;
   }
 
   .features-preview {
@@ -445,6 +471,64 @@ const handleLogin = async () => {
   .feature-icon {
     margin-bottom: 0;
     font-size: 1.5rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .form-group input {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .submit-btn {
+    padding: 0.875rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .client-login-container {
+    padding: 0.75rem;
+  }
+
+  .login-card {
+    padding: 1.75rem 1.25rem;
+  }
+  
+  .card-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .card-header p {
+    font-size: 0.9rem;
+  }
+  
+  .form-group input {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .submit-btn {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
+  
+  .feature-item {
+    padding: 0.875rem;
+  }
+  
+  .feature-icon {
+    font-size: 1.25rem;
+  }
+  
+  .feature-item h3 {
+    font-size: 0.95rem;
+  }
+  
+  .feature-item p {
+    font-size: 0.85rem;
   }
 }
 </style>

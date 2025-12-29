@@ -671,17 +671,72 @@ onUnmounted(() => {
     padding: 0 1rem;
   }
 
+  .page-header {
+    gap: 1rem;
+  }
+
   .page-header h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   .order-card {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .order-header {
     flex-direction: column;
+    align-items: flex-start;
     gap: 1rem;
+  }
+  
+  .order-title {
+    font-size: 1.25rem;
+  }
+  
+  .order-status {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .order-details {
+    gap: 0.75rem;
+  }
+  
+  .order-detail-item {
+    font-size: 0.9rem;
+  }
+  
+  .order-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .order-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 0.875rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .create-order-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .order-card {
+    padding: 1rem;
+  }
+
+  .order-header {
+    gap: 0.75rem;
   }
 }
 </style>
